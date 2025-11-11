@@ -5,7 +5,7 @@ __pycache__/
 
 # C extensions
 *.so
-test.ipynb
+test/
 all_images/
 # Distribution / packaging
 .Python
