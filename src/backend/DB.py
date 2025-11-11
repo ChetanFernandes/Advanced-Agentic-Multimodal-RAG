@@ -2,11 +2,12 @@
 from langchain.storage import InMemoryByteStore
 from langchain_astradb import AstraDBVectorStore
 from langchain.retrievers.multi_vector import MultiVectorRetriever
-from models import clip_embeddings
+from models import *
 from langchain.indexes import SQLRecordManager
 import os
 from dotenv import load_dotenv
 from src.logger_config import log
+import uuid
 
 
 ''' 
@@ -31,10 +32,10 @@ class ConnectToAstraDB:
                  log.exception("AstraDB connection initialization failed")
                 
 
-        def initailize_vector_store(self):
+        def initailize_vector_store(self,collection_name):
             """initialize a LangChain vector store for the given collection"""
             vector_store = AstraDBVectorStore(
-                collection_name = "Multimodal_RAG",
+                collection_name = collection_name,
                 embedding = clip_embeddings,
                 api_endpoint = self.api_endpoint,
                 token = self.app_token,
@@ -42,16 +43,10 @@ class ConnectToAstraDB:
                 metadata_indexing_include=["source", "type", "doc_id"]
             )
             return vector_store, vector_store.collection_name
-        
-        def get_vector_store(self):
-                vector_store, collection_name  = self.initailize_vector_store()
-                log.info(f"vector store initiaized {vector_store}")
-                log.info(f"Collection_name {collection_name}")
-                return vector_store,collection_name
-
     
-        def get_multivector_retriever(self):
-            vector_store, collection_name = self.get_vector_store()
+
+        def get_multivector_retriever(self,collection_name):
+            vector_store, collection_name = self.initailize_vector_store(collection_name)
             byte_store = InMemoryByteStore()
             id_key = "doc_id"  # or whatever you’re using
             log.info("Initialize the MultiVector retriever with the vector store")
@@ -63,13 +58,13 @@ class ConnectToAstraDB:
             )
             return vector_store, collection_name, vector_retriever
         
-        def add_index(self):
+        def add_index(self,collection_name):
             """
             Adds indexing to the AstraDBVectorStore.
             Modes: 'full', 'incremental', or None
             """
             try:
-                vector_store, collection_name,vector_retriever = self.get_multivector_retriever()
+                vector_store, collection_name,vector_retriever = self.get_multivector_retriever(collection_name)
 
                 # Create a record manager (to keep track of indexed docs)
                 namespace = f"AstraDBVectorStore/{collection_name}"
@@ -93,6 +88,5 @@ class ConnectToAstraDB:
                  log.exception("Failed to add index to AstraDB")
    
 
-        
-
+    
 

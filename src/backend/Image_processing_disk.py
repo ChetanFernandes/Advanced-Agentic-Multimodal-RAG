@@ -69,10 +69,14 @@ async def process_single_image(llm, mime_str):
 
 async def extract_Image_summaries(image_path):
     """ Function to extract image sumamries"""
-    llm = ChatOllama(model="qwen2.5vl:3b")
-    mime_strings = encode_image_with_mime(image_path,resize_to=[224,224])
+    try:
+        llm = ChatOllama(model="qwen2.5vl:3b")
+        mime_strings = encode_image_with_mime(image_path,resize_to=[224,224])
 
-    # Run all requests in parallel
-    tasks = [process_single_image(llm, mime_str) for mime_str in mime_strings]
-    results = await asyncio.gather(*tasks)
-    return results
+        # Run all requests in parallel
+        tasks = [process_single_image(llm, mime_str) for mime_str in mime_strings]
+        results = await asyncio.gather(*tasks)
+        return results
+    except Exception:
+        log.exception("Extracting summary from Image failed")
+        return []

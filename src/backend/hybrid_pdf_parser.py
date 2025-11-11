@@ -5,9 +5,10 @@ from backend.Image_processing_disk import extract_Image_summaries
 import asyncio
 from src.logger_config import log
 import re
-import os
+import os,io
 import tempfile
 import shutil
+
 
 
 def pdf_processor(file_bytes,output_dir):
@@ -26,7 +27,8 @@ def pdf_processor(file_bytes,output_dir):
         extract_image_block_to_payload=False,                  # optional
         extract_image_block_output_dir=output_dir)
         return raw_pdf_elements
-    except Exception as e:
+    
+    except Exception:
         log.exception(f"PDF processing failed")
         return []
     
@@ -35,40 +37,68 @@ def pdf_processor(file_bytes,output_dir):
             os.remove(tmp_path)
         log.info(f"Tmp File removed: {tmp_path}")
 
-     
-def extract_pdf_elements(file_name,file_bytes):
-    try:
 
-        log.info("Get the foler to store extracted image from PDF")
-        output_dir = get_doc_image_dir(file_name) #Directory to store image
+  
+def extract_pdf_elements(file_name,file_bytes,user_id):
+    """Extract text and images from PDF safely. Return (documents, error_message)."""
+    try:
+        if not file_bytes:
+            log.warning(f"[PDF_PARSE] Empty file: {file_name}")
+            return [], "Uploaded PDF is empty."
+        
+
+        log.info("Get the folder to store extracted image from PDF")
+        output_dir = get_doc_image_dir(file_name,user_id) #Directory to store image
         log.info(f"Directory path {output_dir}")
 
-        log.info("Enter processor function to extract raw elements from PDF")
+        log.info("Enter processor function to extract elements from PDF")
         raw_pdf_elements = pdf_processor(file_bytes,output_dir)
         log.info(f"Raw_pdf_elements {raw_pdf_elements}")
 
-        log.info("Enter processor function to extract text elements from raw elements")
-        Header, Footer, Title , NarrativeText, Text , ListItem , Img , Tables = extract_text_elements(raw_pdf_elements)
-
-
+        if not raw_pdf_elements:
+            log.warning(f"No elements found in {file_name}")
+            return [], "No readable text or elements found in the PDF."
+        
+        log.info(f"[PDF_PARSE] Extracting text elements...")
+        try:
+            Header, Footer, Title , NarrativeText, Text , ListItem , Img , Tables = extract_text_elements(raw_pdf_elements)
+        except Exception:
+            log.exception("[PDF_PARSE] Text extraction failed.")
+  
         Image_summaries = []
-        # Check if images re present in output_dir
+        
         images = [f for f in os.listdir(output_dir) if f.lower().endswith(('.png', '.jpg', '.jpeg'))]
 
         if images:
-            # To extract image summaries
             log.info('Pass extracted images for summarization')
             Image_summaries = asyncio.run(extract_Image_summaries(output_dir))
-            log.info(f"Summary extracted from images \n{Image_summaries}")
+            if Image_summaries:
+                 Image_summaries = [re.sub(r'[>]+', '', t).strip() for t in Image_summaries if t.strip()]
+                 log.info(f"cleaned image summaries extracted successfully. Count: {len(Image_summaries)}")
+            else:
+                Image_summaries = []
 
-            Image_summaries = [re.sub(r'[>]+', '', t).strip() for t in Image_summaries if t.strip()]
-
-        shutil.rmtree(output_dir)
+        log.info(f"[PDF_PARSE] Combining text and image summaries...")
         final = final_doc(Header, Footer, Title , NarrativeText, Text , ListItem , Img , Tables, Image_summaries, file_name)
         documents = final.overall()
-        return documents
-    except Exception:
+
+        if not documents:
+            log.warning(f"PDF parsed but no valid text documents found in {file_name}")
+            return [], "No readable text detected."
+
+        log.info(f"Extracted {len(documents)} document chunks from {file_name}")
+        return documents, None  # No error message
+
+    except Exception as e:
         log.exception("Creating documents object failed")
+        return [], f"PDF extraction failed: {e}"
+    
+    finally:
+        if output_dir and os.path.exists(output_dir):
+            shutil.rmtree(output_dir, ignore_errors=True)
+            log.info(f"[PDF_PARSE] Cleaned up directory: {output_dir}")
+        else:
+            log.warning(f"⚠️ Output directory not found, skipping cleanup: {output_dir}")
 
 
     

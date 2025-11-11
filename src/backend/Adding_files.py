@@ -9,32 +9,35 @@ from src.logger_config import log
 
 class Adding_files_DB:
     try:
-        def __init__(self,vector_retriever,record_manager,vector_store,file_name,file_bytes):
+        def __init__(self,vector_retriever,record_manager,vector_store,file_name,file_bytes,user_id):
             self.record_manager = record_manager
             self.vector_store = vector_store
             self.vector_retriever = vector_retriever
             self.file_name = file_name
             self.file_bytes = file_bytes
+            self.user_id = user_id
     
         def in_memory_store(self):
-            try:
-                documents = file_processor(self.file_name,self.file_bytes)
-                if documents:
-                    log.info(
-                            "\n" + "\n".join(
-                                [
-                                    f"{'-'*100}\nDocument {i + 1}:\n\nContent:\n{doc.page_content}\n\nMetadata:\n{doc.metadata}"
-                                    if doc.page_content and doc.page_content.strip()
-                                    else f"{'-'*100}\nDocument {i + 1}: No content"
-                                    for i, doc in enumerate(documents)
-                                ]
-                                )
-                                )
-                else:
-                    log.warning(f"No documents found in {self.file_name}")
-
-            except Exception:
-                log.exception(f"Failed to process file: {self.file_name}")
+            documents , error_msg  = file_processor(self.file_name,self.file_bytes,self.user_id)
+            
+            if error_msg:
+                log.warning(f"Skipping DB upload due to PDF issue: {error_msg}")
+                return {"status": "error", "message": error_msg}
+            
+            if not documents:
+                log.warning(f"No documents to store for {self.file_name}")
+                return {"status": "error", "message": "Empty document, nothing to store."}
+            
+            log.info(
+                    "\n" + "\n".join(
+                        [
+                            f"{'-'*100}\nDocument {i + 1}:\n\nContent:\n{doc.page_content}\n\nMetadata:\n{doc.metadata}"
+                            if doc.page_content and doc.page_content.strip()
+                            else f"{'-'*100}\nDocument {i + 1}: No content"
+                            for i, doc in enumerate(documents)
+                        ]
+                        )
+                        )
     
             id_key = "doc_id"
             doc_ids = [str(uuid.uuid4()) for _ in documents]
@@ -56,15 +59,16 @@ class Adding_files_DB:
 
             log.info("Using index to store the child chunks in Astra DB, to avaoid duplicates")
             index(
-                            all_child_docs,
-                            self.record_manager ,
-                            self.vector_store,
-                            cleanup="incremental",
-                            source_id_key="source"
+                    all_child_docs,
+                    self.record_manager ,
+                    self.vector_store,
+                    cleanup="incremental",
+                    source_id_key="source"
                     )
             log.info("child_chunks uploaded in ASTRA Database")
             self.vector_retriever.docstore.mset(list(zip(doc_ids, documents)))
             log.info("Added parent document to vector retriever docstore")
+            return {"status": "success", "message": f"Stored {len(documents)} documents"}
     except Exception:
             log.exception(f"Failed to add file to DB")
 

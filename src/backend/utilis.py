@@ -1,46 +1,18 @@
-import os
-import base64
 from pathlib import Path
 from langchain_core.documents import Document
 from src.logger_config import log
+import os, time
 
 
 
-def encode_image(image_path):
-      with open(image_path, "rb") as image_file:
-          return base64.b64encode(image_file.read()).decode('utf-8')
-      
-
-def Independent_image_upload():
-    """Returns a valid image upload directory."""
-    upload_dir = os.path.join("all_images", "Independent_images")
-    os.makedirs(upload_dir, exist_ok=True)
-    return upload_dir
-      
-
-def get_doc_image_dir(file_name): 
+def get_doc_image_dir(file_name,user_id): 
     doc_name = Path(file_name).stem # give only file name without etension
     base_output_dir = "all_images"
-    output_dir = os.path.join(base_output_dir, doc_name + "_images")
+    timestamp = time.strftime("%Y-%m-%d_%H-%M-%S")
+    output_dir = os.path.join(base_output_dir, user_id, timestamp, doc_name + "_images")
     os.makedirs(output_dir,exist_ok=True)
     return output_dir
 
-
-def create_document_object_text(extracted_contents_text, file_name):
-        return [Document(page_content = item, metadata = {"source": file_name,"type": "combined"}) 
-                          for item in extracted_contents_text or []]
-  
-
-def create_document_object_table(extracted_contents_table, file_name):
-        return [Document(page_content = item, metadata = {"source": file_name,"type": "table" }) 
-                          for item in extracted_contents_table or []]
-      
-def create_document_object_image(extracted_contents_image,file_name):
-        return [Document(
-                         page_content = item, 
-                         metadata = {"source": file_name, "type": "image"}
-                         ) 
-                for item in extracted_contents_image or []]
 
 
 def extract_text_elements(raw_pdf_elements):

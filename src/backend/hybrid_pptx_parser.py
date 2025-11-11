@@ -3,8 +3,6 @@ from pptx import Presentation
 import os
 from backend.utilis import *
 from backend.Image_processing_disk import extract_Image_summaries
-#from langchain_unstructured import UnstructuredLoader
-#from unstructured.cleaners.core import clean_extra_whitespace
 from unstructured.partition.pptx import partition_pptx
 import re
 import asyncio
@@ -12,6 +10,7 @@ from src.logger_config import log
 import re
 import tempfile
 import io
+import shutil
 
 
 def pptx_processor(file_bytes):
@@ -31,6 +30,7 @@ def pptx_processor(file_bytes):
         return raw_pptx_elements
     except Exception:
         log.exception("processing ppt failed")
+        return []
 
 
 def extract_images_from_pptx(file_bytes: str, output_dir):
@@ -64,36 +64,67 @@ def extract_images_from_pptx(file_bytes: str, output_dir):
         return img_paths    
     except Exception:
         log.exception("Image extraction failed")
+        return []
 
 
 
-def extract_pptx_elements(file_name,file_bytes):
+def extract_pptx_elements(file_name,file_bytes,user_id):
     try:
-        log.info("Get the folder to store extracted image from pptx")
-        output_dir = get_doc_image_dir(file_name) #Directory to store image
-
+        if not file_bytes:
+            log.warning(f"[Excel_PARSE] Empty file: {file_name}")
+            return [], "Uploaded excel is empty."
+        
         log.info("Enter processor function to extract raw elements from pptx")
         raw_pptx_elements = pptx_processor(file_bytes)
         log.info(f"Raw_pdf_elements {raw_pptx_elements}")
 
+        if not raw_pptx_elements:
+            log.warning(f"No elements found in {file_name}")
+            return [], "No readable text or elements found in the PPT."
+
+        log.info("Get the folder to store extracted image from pptx")
+        output_dir = get_doc_image_dir(file_name,user_id)
+        log.info(f"Directory path {output_dir}")
+
+
         log.info("Enter processor function to extract text elements from raw elements")
-        Header, Footer, Title , NarrativeText, Text , ListItem , Img , Tables = extract_text_elements(raw_pptx_elements)
+        try:
+         Header, Footer, Title , NarrativeText, Text , ListItem , Img , Tables = extract_text_elements(raw_pptx_elements)
+        except Exception:
+            log.exception("[PPT_PARSE] Text extraction failed.")
         
         doc_image_info  = extract_images_from_pptx(file_bytes, output_dir)
 
         Image_summaries = []
 
         if doc_image_info:
-
-            image_paths = [img["path"] for img in doc_image_info]
-        
-            Image_summaries = asyncio.run(extract_Image_summaries(image_paths))
-
-            Image_summaries = [re.sub(r'[>]+', '', t).strip() for t in Image_summaries if t.strip()]
+            log.info('Pass extracted images for summarization')
+            Image_summaries = asyncio.run(extract_Image_summaries(output_dir))
+            if Image_summaries:
+                 Image_summaries = [re.sub(r'[>]+', '', t).strip() for t in Image_summaries if t.strip()]
+                 log.info(f"cleaned image summaries extracted successfully. Count: {len(Image_summaries)}")
+            else:
+                Image_summaries = []
 
         final = final_doc(Header, Footer, Title , NarrativeText, Text , ListItem , Img , Tables, Image_summaries, file_name)
         documents = final.overall()
-        return documents
-    except Exception:
+
+        if not documents:
+            log.warning(f"PDF parsed but no valid text documents found in {file_name}")
+            return [], "No readable text detected."
+
+        log.info(f"Extracted {len(documents)} document chunks from {file_name}")
+        return documents, None  # No error message
+    
+    except Exception as e:
         log.exception("Creating documents object failed")
+        return [], f"PPT extraction failed: {e}"
+    
+    finally:
+        if output_dir and os.path.exists(output_dir):
+            shutil.rmtree(output_dir, ignore_errors=True)
+            log.info(f"[PDF_PARSE] Cleaned up directory: {output_dir}")
+        else:
+            log.warning(f"⚠️ Output directory not found, skipping cleanup: {output_dir}")
+
 

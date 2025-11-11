@@ -9,6 +9,7 @@ import asyncio
 from unstructured.partition.docx import partition_docx
 from src.logger_config import log
 import tempfile,io
+import shutil
 
 
 def docx_processor(file_bytes):
@@ -27,10 +28,11 @@ def docx_processor(file_bytes):
         return raw_docx_elements
     except Exception:
         log.exception("Doc processing failed")
+        return []
 
 
 def extract_images_from_docx(file_bytes: str, output_dir:str):
-    """Extract embedded images from DOCX and save them to output_dir."""
+    """Extract images from DOC safely"""
     try:
         doc = DocxDocument(io.BytesIO(file_bytes))
         rels = doc.part.rels
@@ -48,37 +50,67 @@ def extract_images_from_docx(file_bytes: str, output_dir:str):
         return saved_files 
     except Exception:
         log.exception("Doc image processing failed")
+        return []
 
 
-def extract_docx_elements(file_name,file_bytes):
+def extract_docx_elements(file_name,file_bytes,user_id):
     try:
         log.info("Get the folder to store extracted image from docx")
-        output_dir = get_doc_image_dir(file_name) #Directory to store image
+        output_dir = get_doc_image_dir(file_name,user_id) 
+        log.info(f"Directory path {output_dir}")
 
         log.info("Enter processor function to extract raw elements from docx")
         raw_docx_elements = docx_processor(file_bytes)
         log.info(f"Raw_pdf_elements {raw_docx_elements}")
 
-        log.info("Enter processor function to extract text elements from raw elements")
-        Header, Footer, Title , NarrativeText, Text , ListItem , Img , Tables = extract_text_elements(raw_docx_elements)
+        if not raw_docx_elements:
+            log.warning(f"No elements found in {file_name}")
+            return [], "No readable text or elements found in the doc."
+
+        log.info(f"[DOC_PARSE] Extracting text elements...")
+        try:
+           Header, Footer, Title , NarrativeText, Text , ListItem , Img , Tables = extract_text_elements(raw_docx_elements)
+        except Exception:
+            log.exception("[doc_PARSE] Text extraction failed.")
+            return [], "Text extraction failed"
+
         
+        log.info(f"[DOC_PARSE] Extracting images...")
         doc_image_info  = extract_images_from_docx(file_bytes, output_dir)
 
         Image_summaries = []
-
         if doc_image_info:
-
             image_paths = [img["path"] for img in doc_image_info]
-    
             Image_summaries = asyncio.run(extract_Image_summaries(image_paths))
-
-            Image_summaries = [re.sub(r'[>]+', '', t).strip() for t in Image_summaries if t.strip()]
-
+            if Image_summaries:
+                 Image_summaries = [re.sub(r'[>]+', '', t).strip() for t in Image_summaries if t.strip()]
+                 log.info(f"cleaned image summaries extracted successfully. Count: {len(Image_summaries)}")
+            else:
+                Image_summaries = []
+     
+        
+        log.info(f"[DOC_PARSE] Combining text and image summaries...")
         final = final_doc(Header, Footer, Title , NarrativeText, Text , ListItem , Img , Tables, Image_summaries, file_name)
         documents = final.overall()
-        return documents
-    except Exception:
+
+        if not documents:
+            log.warning(f"DOC parsed but no valid text documents found in {file_name}")
+            return [], "No readable text detected."
+
+        log.info(f"Extracted {len(documents)} document chunks from {file_name}")
+        return documents, None  # No error message
+
+    except Exception as e:
         log.exception("Creating documents object failed")
+        return [], f"DOCx extraction failed: {e}"
+    
+    finally:
+        if output_dir and os.path.exists(output_dir):
+            shutil.rmtree(output_dir, ignore_errors=True)
+            log.info(f"[DOC_PARSE] Cleaned up directory: {output_dir}")
+        else:
+            log.warning(f" Output directory not found, skipping cleanup: {output_dir}")
+
 
 
 

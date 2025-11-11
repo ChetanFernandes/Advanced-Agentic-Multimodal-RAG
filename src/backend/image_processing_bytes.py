@@ -1,6 +1,6 @@
 from langchain_core.messages import HumanMessage, SystemMessage
 from PIL import Image
-import os, io, base64
+import io, base64
 from langchain_community.chat_models import ChatOllama
 import asyncio
 from src.logger_config import log
@@ -58,10 +58,19 @@ async def process_single_image(llm, mime_str):
 
 async def extract_Image_summaries(image_bytes,content_type):
     """ Function to extract image sumamries"""
-    llm = ChatOllama(model="qwen2.5vl:3b")
-    mime_strings = encode_image_with_mime(image_bytes,content_type,resize_to=[224,224])
+    try:
+        llm = ChatOllama(model="qwen2.5vl:3b")
+        mime_strings = encode_image_with_mime(image_bytes,content_type,resize_to=[224,224])
 
-    # Run all requests in parallel
-    tasks = [process_single_image(llm, mime_str) for mime_str in mime_strings]
-    results = await asyncio.gather(*tasks)
-    return results
+        # Run all requests in parallel
+        tasks = [process_single_image(llm, mime_str) for mime_str in mime_strings]
+        results = await asyncio.gather(*tasks)
+        if not results:
+            log.info("No summary extracted")
+            return []
+        
+        return results
+    
+    except Exception:
+        log.exception("Image summarization failed")
+        return []

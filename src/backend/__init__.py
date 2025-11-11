@@ -1,1 +1,1 @@
-from .utilis import encode_image,Independent_image_upload,get_doc_image_dir,extract_text_elements
+from .utilis import get_doc_image_dir,extract_text_elements

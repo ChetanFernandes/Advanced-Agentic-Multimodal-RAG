@@ -12,9 +12,7 @@ from langchain.retrievers import MultiQueryRetriever, EnsembleRetriever, Context
 #from langchain_community.document_compressors.flashrank_rerank import FlashrankRerank,Ranker
 from langchain_community.document_compressors import FlashrankRerank
 from src.logger_config import log
-import os
-from backend.utilis import Independent_image_upload
-import re
+
 
 
 class Hybrid_retriever:
@@ -22,7 +20,7 @@ class Hybrid_retriever:
             try:
                 self.vector_retriever = vector_retriever
                 self.vector_store = vector_store
-                self.all_docs = self.vector_store.similarity_search("", k=1000)
+                #self.all_docs = self.vector_store.similarity_search("", k=1000)
                 self.llm = llm
                 log.info("✅ HybridRetriever initialized successfully.")
             except Exception:
@@ -31,6 +29,7 @@ class Hybrid_retriever:
         async def build(self,filter_metadata):
             ''' Build a hybrid retriever combining keyword, vector, and multi-query retrieval with compression '''
             try:
+                all_docs = await self.vector_store.asimilarity_search("", k=1000)
                 log.info("Using Ensemble retrievr to combine both keyword and vector retriever")
                 if filter_metadata:
                     log.info(f"Filter metadata: {filter_metadata}")
@@ -43,7 +42,7 @@ class Hybrid_retriever:
                     def filter_docs_by_source(docs, source_name):
                         return [doc for doc in docs if doc.metadata.get("source") == source_name]
 
-                    filtered_docs = filter_docs_by_source(self.all_docs, filter_metadata["source"])
+                    filtered_docs = filter_docs_by_source(all_docs, filter_metadata["source"])
                     keyword_retriever = BM25Retriever.from_texts([doc.page_content for doc in filtered_docs])
 
                 # Build ensemble
@@ -53,7 +52,7 @@ class Hybrid_retriever:
 
                 class LoggedMultiQueryRetriever(MultiQueryRetriever):
                     """Inner class that logs multiple queries."""
-                    async def generate_queries(self, question: str, run_manager=None):
+                    async def generate_queries(self, question: str, run_manager):
                         try:
                              if run_manager:
                                   queries = await super().agenerate_queries(question, run_manager=run_manager)
@@ -67,7 +66,7 @@ class Hybrid_retriever:
                             log.exception("Failed to generate multiple queries")
                             return [question]  # fallback to single query
 
-                    async def aget_relevant_documents(self, query: str, run_manager=None):
+                    async def aget_relevant_documents(self, query: str, run_manager):
                         try:
                             queries = await self.generate_queries(query, run_manager=run_manager)
 
@@ -99,10 +98,20 @@ class Hybrid_retriever:
                 
                 # Define async contextual compression retriever
                 class AsyncContextualCompressionRetriever(ContextualCompressionRetriever):
-                    async def aget_relevant_documents(self, query,run_manager=None):
+                 
+                    async def aget_relevant_documents(self, query, run_manager = None):
                         try:
                             # First, retrieve relevant docs asynchronously (already async)
-                            docs = await self.base_retriever.aget_relevant_documents(query,run_manager=run_manager)
+                            docs = await self.base_retriever.aget_relevant_documents(query,run_manager = run_manager)
+                            log.info("Docs retrived by Hybrid filter before re-rank")
+                            log.info("\n" + "\n".join(
+                                    [
+                                    f"{'-' * 100}\n Document {i+1}:\n\n content:\n{doc.page_content}\n\n metadata:\n {doc.metadata}"
+                                    if doc.page_content and doc.page_content.strip()
+                                    else f"{'-'*100}\nDocument {i + 1}: No content"
+                                    for i, doc in enumerate(docs)
+                                    ]
+                                ))
 
                             # Now compress them asynchronously (CPU offload)
                             compressed  = await asyncio.to_thread(self.base_compressor.compress_documents,docs,query)
@@ -123,20 +132,24 @@ class Hybrid_retriever:
 
 
 class question_answering:
-    def __init__(self,llm,compression_retriever,agent,web_search_agent):
-        self.compression_retriever = compression_retriever
+    def __init__(self,llm,vector_store,vector_retriever,selected_doc):
         self.llm = llm
-        self.agent = agent
-        self.instance_web_search_agent = web_search_agent
+        self.vector_store = vector_store
+        self.vector_retriever = vector_retriever
+        self.selected_doc = selected_doc
+        self.initilize_retriever = Hybrid_retriever(self.vector_store,self.vector_retriever,self.llm)
+      
     
     async def retrieve_answer_from_query(self,query):
+        
+        compression_retriever = await self.initilize_retriever.build(filter_metadata={"source": self.selected_doc})
 
         log.info(f"Passing query to compression retriever: {query}")
-        results = await self.compression_retriever.aget_relevant_documents(query) #Because now it’s async and can run directly on event loop (fast!).
+        retrieved_docs = await compression_retriever.aget_relevant_documents(query) #Because now it’s async and can run directly on event loop (fast!).
 
-        if not results:
+        if not retrieved_docs:
             log.warning("⚠️ No relevant documents found.")
-            st.warning("No relevant documents found")
+            return []
 
         log.info("Below is the results retrived")
         
@@ -145,84 +158,98 @@ class question_answering:
                  f"{'-' * 100}\n Document {i+1}:\n\n content:\n{doc.page_content}\n\n metadata:\n {doc.metadata}"
                  if doc.page_content and doc.page_content.strip()
                  else f"{'-'*100}\nDocument {i + 1}: No content"
-                 for i, doc in enumerate(results)
+                 for i, doc in enumerate(retrieved_docs)
                  ]
             ))
-        return results
+        return retrieved_docs
 
  
     async def extract_question_from_given_input(self,query,image):
+        try:
 
-        log.info(f"🟢 Received user text query: {query}")
-        image_summary = []
-        if image:
-                image.seek(0)  
-                image_bytes = await image.read()   # Reads the entire file as bytes (async)
-                content_type = image.content_type
-                log.info(type(image_bytes))           # <class 'bytes'>
-                log.info(f"Image file_name - {image.filename}")            
-                log.info(f"Image content type - {image.content_type}") # "image/png"
-                image_summary = await extract_Image_summaries(image_bytes,content_type)
-                image_summary = "\n".join(image_summary) if isinstance(image_summary, list) else str(image_summary)
+            log.info(f"🟢 Received user text query: {query}")
+            image_summary = []
+            if image:
+                    image.seek(0)  
+                    image_bytes = await image.read()   # Reads the entire file as bytes (async)
+                    content_type = image.content_type
+                    log.info(type(image_bytes))           # <class 'bytes'>
+                    log.info(f"Image file_name - {image.filename}")            
+                    log.info(f"Image content type - {image.content_type}") # "image/png"
+                    image_summary = await extract_Image_summaries(image_bytes,content_type)
+                    if image_summary:
+                        image_summary = "\n".join(image_summary) if isinstance(image_summary, list) else str(image_summary)
+            
 
+            # Retrieve text context from RAG
+            log.info("passing query to compression retriever")
+            retrieved_docs = await self.retrieve_answer_from_query(query)
+            if not retrieved_docs:
+                log.info("No results retrived for given query")
+                return [], query
+
+            text_context = "\n".join([d.page_content for d in retrieved_docs])
+            log.info(f"text context passed to LLM \n{text_context}")
+
+            rag_found = bool(retrieved_docs)
+
+            Final_context = ""
+            
+            log.info("Check what contet we are passing to LLM")
+            if rag_found and image_summary:
+                Final_context = f"Retrieved Text:\n{text_context}\n\nImage Summary:\n{image_summary}"
+                log.info(f"Passing both text and image context to LLM - \n {Final_context}")
+                system_msg = (
+                    "You are a helpful assistant. Use both the retrieved text context "
+                    "and the image summary to answer the question accurately."
+                )
+
+            elif rag_found:
+                Final_context = f"Retrieved Text:\n{text_context}"
+                log.info(f"Passing only text context to LLM - \n {Final_context}")
+                system_msg = (
+                    "You are a helpful assistant. Use the retrieved text context to answer the question."
+                )
+
+            elif image_summary:
+                Final_context = f"Image Summary:\n{image_summary}"
+                log.info(f"Passing only image summary to LLM \n {Final_context}")
+                system_msg = (
+                    "No text context found. Answer based on the image summary. Indicate this is visual analysis"
+                )
+            else:
+                log.info("No results dervived from LLM")
+                system_msg = (
+                    "No context available. Please upload a document or image."
+                )
+            
+
+            # Start with system + user question
+            prompt = ChatPromptTemplate.from_messages([
+            (SystemMessagePromptTemplate.from_template(system_msg)),
+            (HumanMessagePromptTemplate.from_template("Question: {question}\nContext: {context}"))])
+
+            
+            log.info("Invoke the chain")
+            # Invoke with actual user input
+            chain = prompt | self.llm  | StrOutputParser()
         
-        # Retrieve text context from RAG
-        log.info("passing query to compression retriever")
-        results = await self.retrieve_answer_from_query(query) if query else []
+            result = await chain.ainvoke({
+                "question": query,
+                "context": Final_context,
+            })
+            if not result:
+                log.info("No results from LLM")
+                return result, query
 
-        text_context = "\n".join([d.page_content for d in results])
-        log.info(f"text context passed to LLM \n{text_context}")
+            log.info("Final Answer from LLM:")
+            log.info(f"{result}")
 
-        rag_found = bool(results)
-
-        combined_context = ""
-        
-        log.info("Check what contet we are passing to LLM")
-        if rag_found and image_summary:
-            combined_context = f"Retrieved Text:\n{text_context}\n\nImage Summary:\n{image_summary}"
-            log.info(f"Passing both text and image context to LLM - \n {combined_context}")
-            system_msg = (
-                "You are a helpful assistant. Use both the retrieved text context "
-                "and the image summary to answer the question accurately."
-            )
-
-        elif rag_found:
-            combined_context = f"Retrieved Text:\n{text_context}"
-            log.info(f"Passing only text context to LLM - \n {combined_context}")
-            system_msg = (
-                "You are a helpful assistant. Use the retrieved text context to answer the question."
-            )
-
-        elif image_summary:
-            combined_context = f"Image Summary:\n{image_summary}"
-            log.info(f"Passing only image summary to LLM \n {combined_context}")
-            system_msg = (
-                "No text context found. Answer based on the image summary. Indicate this is visual analysis"
-            )
-        else:
-            log.info("No results dervived from LLM")
-            system_msg = (
-                "No context available. Please upload a document or image."
-            )
-        
-
-        # Start with system + user question
-        prompt = ChatPromptTemplate.from_messages([
-        (SystemMessagePromptTemplate.from_template(system_msg)),
-        (HumanMessagePromptTemplate.from_template("Question: {question}\nContext: {context}"))])
-
-        
-        log.info("Invoke the chain")
-        # Invoke with actual user input
-        chain = prompt | self.llm  | StrOutputParser()
-      
-        retrived_results = await chain.ainvoke({
-            "question": query,
-            "context": combined_context,
-        })
-        log.info("💬 Final Answer from LLM:")
-        log.info(f"{retrived_results}")
-        return retrived_results,query
+            return result,query
+    
+        except Exception:
+            log.exception("Result extraction failed")
+            return [], query
 
         # Retrieve Answer First
         # Sends the query to the qa_chain.

@@ -1,5 +1,5 @@
 streamlit run "src\frontend\app.py"
-python -m uvicorn src.backend.main:app --host 0.0.0.0 --port 8000 --reload
+D:\GEN AI\GEN_AI_MASTERS_Bappy\Langchain\Advanced_prod_RAG
 Explanation:
 
 python -m uvicorn → launch uvicorn through python

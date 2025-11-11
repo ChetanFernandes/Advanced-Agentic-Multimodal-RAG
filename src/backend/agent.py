@@ -82,7 +82,7 @@ class web_agent:
         try:
             final_response = await agent.ainvoke({"input": f"User Question: {query} \n Retrieved Info: {retrived_results}"})
         except Exception:
-            log.info("iteration limit reached, summarize last observation")
+            log.exception("iteration limit reached, summarize last observation")
             history = self.memory.load_memory_variables({}).get("chat_history", [])
             last_obs = history[-1].content if history else "No observation found."
             summary = await self.llm.ainvoke(
@@ -93,4 +93,4 @@ class web_agent:
     
 
 
-
+  

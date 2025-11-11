@@ -10,7 +10,7 @@ import asyncio
 from src.logger_config import log
 import re
 import tempfile
-
+import shutil
 # Extract only text + tables (no images).
 def extract_text_tables(file_bytes):
     try:
@@ -29,6 +29,7 @@ def extract_text_tables(file_bytes):
         return raw_excel_elements
     except Exception:
         log.exception("Extracting excel elements failed")
+        return []
 
 def extract_images(file_bytes:bytes,output_dir:str):
     '''
@@ -53,23 +54,37 @@ def extract_images(file_bytes:bytes,output_dir:str):
         return saved_files 
     except Exception:
         log.exception("Extracting image from exce failed")
+        return []
 
 
-def extract_excel_elements(file_name,file_bytes):
+def extract_excel_elements(file_name,file_bytes,user_id):
     try:
+
+        if not file_bytes:
+            log.warning(f"[Excel_PARSE] Empty file: {file_name}")
+            return [], "Uploaded excel is empty."
+
         # 1. Extract text + tables
         log.info("Entering function to extract raw elements")
         raw_excel_elements = extract_text_tables(file_bytes)
         log.info("Raw elements successfully extracted")
 
-        # 2. Convert raw excel elements in text
-        log.info("Enter processor function to extract text elements from raw elements")
-        Header, Footer, Title , NarrativeText, Text , ListItem , Img , Tables = extract_text_elements(raw_excel_elements)
-
-        # 3. Get image output directory
+        if not raw_excel_elements:
+            log.warning(f"No elements found in {file_name}")
+            return [], "No readable text or elements found in the excel."
+        
+         #2. Get image output directory
         log.info("Entering function to get directory path to store images")
-        output_dir = get_doc_image_dir(file_name)
+        output_dir = get_doc_image_dir(file_name,user_id)
         log.info(f"Directory path {output_dir}")
+
+        #2. Convert raw excel elements in text
+        log.info("Enter processor function to extract text elements from raw elements")
+        try:
+            Header, Footer, Title , NarrativeText, Text , ListItem , Img , Tables = extract_text_elements(raw_excel_elements)
+        except Exception:
+            log.exception("[Excel_PARSE] Text extraction failed.")
+
 
         # 4. Extract images from Excel
         log.info("Entering function to get image from uploaded excel file")
@@ -82,21 +97,36 @@ def extract_excel_elements(file_name,file_bytes):
             log.info("Extracting image_path")
             image_paths = [img["path"] for img in excel_image_info]
             log.info(f"Image_path extracted -> {image_paths}")
-
-            # 5. Convert images to summaries + Document objects
             
             log.info('Entering function to capture image summaries')
             Image_summaries = asyncio.run(extract_Image_summaries(image_paths))
-            log.info(f'Image summary extracted {Image_summaries}')
+            if Image_summaries:
+                 Image_summaries = [re.sub(r'[>]+', '', t).strip() for t in Image_summaries if t.strip()]
+                 log.info(f"cleaned image summaries extracted successfully. Count: {len(Image_summaries)}")
+            else:
+                Image_summaries = []
 
-            Image_summaries = [re.sub(r'[>]+', '', t).strip() for t in Image_summaries if t.strip()]
-        
         log.info("Entering function to get final information")
         final = final_doc(Header, Footer, Title , NarrativeText, Text , ListItem , Img , Tables, Image_summaries, file_name)
         documents = final.overall()
-        return documents
-    except Exception:
+
+        if not documents:
+            log.warning(f"excel parsed but no valid text documents found in {file_name}")
+            return [], "No readable text detected."
+        
+        log.info(f"Extracted {len(documents)} document chunks from {file_name}")
+        return documents, None  # No error message
+
+    except Exception as e:
         log.exception("Creating documents object failed")
+        return [], f"Excel extraction failed: {e}"
+    
+    finally:
+        if output_dir and os.path.exists(output_dir):
+            shutil.rmtree(output_dir, ignore_errors=True)
+            log.info(f"[Excel_PARSE] Cleaned up directory: {output_dir}")
+        else:
+            log.warning(f"⚠️ Output directory not found, skipping cleanup: {output_dir}")
 
 
 
