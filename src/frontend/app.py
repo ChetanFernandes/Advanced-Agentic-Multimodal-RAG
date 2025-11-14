@@ -3,9 +3,10 @@ import requests
 import time
 from logger_config import log
 import jwt
+import extra_streamlit_components as stx
 
-import os
 
+cookie_manager = stx.CookieManager()
 
 API_URL = "http://localhost:8000"
 JWT_SECRET = st.secrets["auth"]["JWT_SECRET"]
@@ -14,13 +15,27 @@ JWT_ALGO = "HS256"
 
 st.set_page_config(page_title="RAG App Login", page_icon="🔐")
 
+# 1. First: Try to load user from cookies
+if not st.session_state.get("logging_out"):
+    user_cookie = cookie_manager.get("user")
+    token_cookie = cookie_manager.get("jwt_token")
+else:
+    user_cookie = None
+    token_cookie = None
+
+if "logging_out" in st.session_state:
+    st.session_state.pop("logging_out")
+
+if user_cookie and token_cookie:
+    st.session_state["user"] = user_cookie
+    st.session_state["jwt_token"] = token_cookie
 
 
-# 🔥 Step 1: Check if this is the POST callback from FastAPI
-
-if st.session_state.get("user") is None:
-    try:
-        # Streamlit catches POST body via query params workaround
+# 2. Next: Try OAuth callback ONLY IF no user found in session_state
+# -------------------------------------------------------------
+if "user" not in st.session_state or st.session_state["user"] is None:
+        
+        # Read the token returned from FastAPI callback
         query_params = st.query_params
         token_list = query_params.get("token")
         log.info(f" Token List -> {token_list}")
@@ -36,6 +51,9 @@ if st.session_state.get("user") is None:
                 st.session_state["user"] = user_info
                 st.session_state["jwt_token"] = jwt_token
 
+                cookie_manager.set("user", user_info, key="cookie_user_setter")
+                cookie_manager.set("jwt_token", jwt_token, key="cookie_jwt_setter")
+
                 st.query_params.clear()
 
         
@@ -46,24 +64,22 @@ if st.session_state.get("user") is None:
             except jwt.InvalidTokenError:
                 st.error("Invalid login token.")
                 st.stop()
-    except Exception:
-        log.exception("Login failed")
 
 
-# 🔥 Step 2: If no user logged in → show Google login
-# ---------------------------
+
+# 3. If still no user → show login screen
+# -------------------------------------------------------------
 if "user" not in st.session_state or st.session_state["user"] is None:
     st.subheader("Please log in to continue")
-    st.markdown(f'<a href="{API_URL}/login" target="_self">👉 Log in with Google</a>',unsafe_allow_html=True)
+    st.markdown(f'<a href="{API_URL}/login" target="_self">👉 Log in with Google</a>', unsafe_allow_html=True)
     st.stop()
+# ---------------------------
 
 
-# 🔥 Step 3: Logged-in UI
+# 4. User is logged in from cookies or callback → continue
 # ---------------------------
 user = st.session_state["user"]
 jwt_token = st.session_state["jwt_token"]
-
-#st.write("JWT Token: ", st.session_state.get("jwt_token"))
 
 st.success(f"Welcome {user['name']} 👋 ({user['email']})")
 user_id = user["sub"]
@@ -72,13 +88,17 @@ if  st.button("Logout"):
     response = requests.post(f"{API_URL}/logout", headers = st.session_state.get("auth_headers"))
     if response.status_code == 200:
         st.write(response.json().get("message"))
+        st.session_state["logging_out"] = True 
         st.session_state.pop("user", None)
         st.session_state.pop("jwt_token", None)
         st.session_state.pop("auth_headers", None)
         st.cache_data.clear()
+        cookie_manager.delete("user", key="cookie_user_setter")
+        cookie_manager.delete("jwt_token", key="cookie_jwt_setter")
         #st.session_state.pop("available_sources", None)
         st.rerun()
     else:
+        st.session_state["logging_out"] = True
         st.session_state.clear()
         st.rerun()
 
@@ -221,7 +241,7 @@ if st.session_state.available_sources:
                     st.success(response.json().get("message", "Collection deleted successfully."))
                     load_sources(force_refresh=True)
                     st.session_state.pop("selected_doc", None)
-                    #st.rerun()
+                    st.rerun()
                 else:
                     result = response.json().get("message", "Failed to delete collection.")
                     st.error(result)
