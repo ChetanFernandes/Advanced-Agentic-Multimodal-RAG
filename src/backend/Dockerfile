@@ -66,4 +66,4 @@ EXPOSE 8000
     #ollama pull qwen2.5vl:3b && \
     #uvicorn src.backend.main:app --host 0.0.0.0 --port 8000
 
-CMD uvicorn src.backend.main:app --host 0.0.0.0 --port $PORT
+CMD uvicorn src.backend.main:app --host 0.0.0.0 --port 10000
