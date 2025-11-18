@@ -1,5 +1,5 @@
 from langchain.prompts import ChatPromptTemplate, HumanMessagePromptTemplate, SystemMessagePromptTemplate
-from backend.image_processing_bytes import extract_Image_summaries
+from src.backend.image_processing_bytes import extract_Image_summaries
 from langchain_core.output_parsers import StrOutputParser
 import asyncio
 from langchain.indexes import index

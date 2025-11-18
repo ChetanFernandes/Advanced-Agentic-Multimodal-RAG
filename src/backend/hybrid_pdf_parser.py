@@ -1,13 +1,11 @@
 from unstructured.partition.pdf import partition_pdf
 from langchain.docstore.document import Document
-from backend.utilis import *
-from backend.Image_processing_disk import extract_Image_summaries
-import asyncio
+from src.backend.utilis import *
+from src.backend.Image_processing_disk import extract_Image_summaries
 from src.logger_config import log
-import re
-import os,io
+import os
 import tempfile
-import shutil
+
 
 
 
@@ -91,14 +89,7 @@ def extract_pdf_elements(file_name,file_bytes,user_id):
     except Exception as e:
         log.exception("Creating documents object failed")
         return [], f"PDF extraction failed: {e}"
-    '''
-    finally:
-        if output_dir and os.path.exists(output_dir):
-            shutil.rmtree(output_dir, ignore_errors=True)
-            log.info(f"[PDF_PARSE] Cleaned up directory: {output_dir}")
-        else:
-            log.warning(f"⚠️ Output directory not found, skipping cleanup: {output_dir}")
-    '''
+   
 
 
     

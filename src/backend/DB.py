@@ -7,7 +7,7 @@ from langchain.indexes import SQLRecordManager
 import os
 from dotenv import load_dotenv
 from src.logger_config import log
-import uuid
+
 
 
 ''' 

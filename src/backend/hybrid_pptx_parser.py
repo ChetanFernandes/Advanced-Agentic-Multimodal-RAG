@@ -1,16 +1,15 @@
 from langchain.docstore.document import Document
 from pptx import Presentation
 import os
-from backend.utilis import *
-from backend.Image_processing_disk import extract_Image_summaries
+from src.backend.utilis import *
+from src.backend.Image_processing_disk import extract_Image_summaries
 from unstructured.partition.pptx import partition_pptx
-import re
 import asyncio
 from src.logger_config import log
 import re
 import tempfile
 import io
-import shutil
+
 
 
 def pptx_processor(file_bytes):

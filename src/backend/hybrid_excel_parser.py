@@ -1,6 +1,6 @@
 from unstructured.partition.xlsx import partition_xlsx
-from backend.utilis import * 
-from backend.Image_processing_disk import extract_Image_summaries
+from src.backend.utilis import * 
+from src.backend.Image_processing_disk import extract_Image_summaries
 import openpyxl
 from openpyxl import load_workbook
 from PIL import Image

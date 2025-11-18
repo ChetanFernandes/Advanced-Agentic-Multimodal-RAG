@@ -4,7 +4,7 @@ import os
 from langchain.tools import Tool
 from dotenv import load_dotenv
 from langchain.agents import initialize_agent, AgentType
-from backend.parser import StrictOutputParser
+from src.backend.parser import StrictOutputParser
 from src.logger_config import log
 
 class web_agent:

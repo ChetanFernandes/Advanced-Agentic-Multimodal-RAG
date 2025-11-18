@@ -3,13 +3,13 @@
 import re
 from docx import Document as DocxDocument
 import os
-from backend.utilis import get_doc_image_dir, extract_text_elements,final_doc
-from backend.Image_processing_disk import extract_Image_summaries
+from src.backend.utilis import get_doc_image_dir, extract_text_elements,final_doc
+from src.backend.Image_processing_disk import extract_Image_summaries
 import asyncio
 from unstructured.partition.docx import partition_docx
 from src.logger_config import log
 import tempfile,io
-import shutil
+
 
 
 def docx_processor(file_bytes):

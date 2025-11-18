@@ -1,19 +1,18 @@
 # FastAPI is built on top of asyncio, a Python library that supports asynchronous programming — 
 # meaning tasks can run without blocking each other.
 
-from fastapi import FastAPI, Query, UploadFile, File, Form, Request, Header
+from fastapi import FastAPI, Query, UploadFile, File, Form, Request, Header, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware 
-from starlette.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
-from backend.DB import ConnectToAstraDB
-from backend.agent import web_agent
-from backend.Adding_files import Adding_files_DB
-from backend.utilis import *
-from backend.image_processing_bytes import extract_Image_summaries
+from src.backend.DB import ConnectToAstraDB
+from src.backend.agent import web_agent
+from src.backend.Adding_files import Adding_files_DB
+from src.backend.utilis import *
+from src.backend.image_processing_bytes import extract_Image_summaries
 from src.models import *
 import asyncio
 from langchain_ollama import ChatOllama
-from backend.chunking_retrieveing import question_answering
+from src.backend.chunking_retrieveing import question_answering
 from fastapi.responses import JSONResponse
 from src.logger_config import log
 from astrapy import DataAPIClient
@@ -23,7 +22,6 @@ from authlib.integrations.starlette_client import OAuth
 import jwt
 from datetime import datetime, timedelta, timezone
 from fastapi.responses import HTMLResponse
-from fastapi import Header, HTTPException, Depends
 from starlette.middleware.sessions import SessionMiddleware
 import shutil
 
@@ -86,6 +84,14 @@ async def lifespan(app: FastAPI):
          log.exception("App Intilization failed")
 
 app = FastAPI(lifespan=lifespan) # router is the internal object FastAPI uses to manage all endpoints (routes).
+
+@app.get("/")
+async def root():
+    return {"message": "Backend is running"}
+
+@app.get("/health")
+async def health():
+    return {"status": "ok"}
 
 app.add_middleware(
     SessionMiddleware,

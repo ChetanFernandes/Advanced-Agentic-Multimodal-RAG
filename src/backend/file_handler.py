@@ -1,9 +1,9 @@
 import os
-from backend.hybrid_pdf_parser import extract_pdf_elements
-from backend.hybrid_docx_parser import extract_docx_elements
-from backend.hybrid_excel_parser import extract_excel_elements
-from backend.hybrid_pptx_parser import extract_pptx_elements
-from backend.hybrid_text_csv_json import txt_file_processing,csv_file_processing,JSON_file_processing
+from src.backend.hybrid_pdf_parser import extract_pdf_elements
+from src.backend.hybrid_docx_parser import extract_docx_elements
+from src.backend.hybrid_excel_parser import extract_excel_elements
+from src.backend.hybrid_pptx_parser import extract_pptx_elements
+from src.backend.hybrid_text_csv_json import txt_file_processing,csv_file_processing,JSON_file_processing
 import pandas as pd
 from src.logger_config import log
 
