@@ -11,12 +11,13 @@ ENV DEBIAN_FRONTEND=noninteractive
 # =============================
 RUN apt-get update && apt-get install -y \
     curl \
-    python3 \
-    python3-pip \
-    python3-venv \
     git \
     libgl1 \
     libglib2.0-0 \
+    libsm6 \
+    libxrender1 \
+    libxext6 \
+    libmagic1 \
     && rm -rf /var/lib/apt/lists/*
 
 # =============================
@@ -29,10 +30,10 @@ RUN curl -fsSL https://ollama.com/install.sh | sh
 # =============================
 # 5. Working Directory
 # =============================
-# → This ensures Uvicorn runs inside backend folder
-WORKDIR /app
+# Inside the Docker container, work inside the folder /app
+WORKDIR /app  
 
-# Add src root to Python module search path
+# Add src root to Python module search path. “Also look inside /app when searching for imports.
 ENV PYTHONPATH=/app
 
 
@@ -60,7 +61,9 @@ EXPOSE 8000
 # =============================
 # 8. Start Ollama + FastAPI together
 # =============================
-CMD ollama serve & \
-    sleep 5 && \
-    ollama pull qwen2.5vl:3b && \
-    uvicorn src.backend.main:app --host 0.0.0.0 --port 8000
+#CMD ollama serve & \
+    #sleep 5 && \
+    #ollama pull qwen2.5vl:3b && \
+    #uvicorn src.backend.main:app --host 0.0.0.0 --port 8000
+
+CMD uvicorn src.backend.main:app --host 0.0.0.0 --port 8000

@@ -17,8 +17,8 @@ services:
   - name: rag-frontend
     type: web
     env: python
-    rootDir: src/frontend
+    rootDir: .
     plan: free                     # Streamlit can run on free tier
-    buildCommand: "pip install -r requirements.txt"
-    startCommand: "streamlit run app.py --server.port 8501 --server.address 0.0.0.0"
+    buildCommand: "pip install -r src/frontend/requirements.txt"
+    startCommand: "streamlit run src/frontend/app.py --server.port 8501 --server.address 0.0.0.0"
     autoDeploy: true
