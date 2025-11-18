@@ -27,7 +27,11 @@ RUN curl -fsSL https://ollama.com/install.sh | sh
 # =============================
 # 5. Working Directory
 # =============================
-WORKDIR /app
+# → This ensures Uvicorn runs inside backend folder
+WORKDIR /app/src/backend
+
+# Add src root to Python module search path
+ENV PYTHONPATH=/app/src
 
 
 # 6. Copy project code (SRC) and requirements
