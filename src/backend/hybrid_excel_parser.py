@@ -1,7 +1,6 @@
 from unstructured.partition.xlsx import partition_xlsx
 from src.backend.utilis import * 
 from src.backend.Image_processing_disk import extract_Image_summaries
-import openpyxl
 from openpyxl import load_workbook
 from PIL import Image
 import io,os
@@ -10,7 +9,6 @@ import asyncio
 from src.logger_config import log
 import re
 import tempfile
-import shutil
 # Extract only text + tables (no images).
 def extract_text_tables(file_bytes):
     try:
@@ -124,16 +122,7 @@ def extract_excel_elements(file_name,file_bytes,user_id):
     except Exception as e:
         log.exception("Creating documents object failed")
         return [], f"Excel extraction failed: {e}"
-    '''
-    finally:
-        if output_dir and os.path.exists(output_dir):
-            shutil.rmtree(output_dir, ignore_errors=True)
-            log.info(f"[Excel_PARSE] Cleaned up directory: {output_dir}")
-        else:
-            log.warning(f"⚠️ Output directory not found, skipping cleanup: {output_dir}")
-    '''
-
-
+   
 
 
 

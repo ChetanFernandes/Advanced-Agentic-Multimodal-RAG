@@ -108,14 +108,7 @@ def extract_docx_elements(file_name,file_bytes,user_id):
     except Exception as e:
         log.exception("Creating documents object failed")
         return [], f"DOCx extraction failed: {e}"
-    '''
-    finally:
-        if output_dir and os.path.exists(output_dir):
-            shutil.rmtree(output_dir, ignore_errors=True)
-            log.info(f"[DOC_PARSE] Cleaned up directory: {output_dir}")
-        else:
-            log.warning(f" Output directory not found, skipping cleanup: {output_dir}")
-    '''
+  
 
 
 

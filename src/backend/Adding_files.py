@@ -1,6 +1,6 @@
 import logging as log
 import uuid
-from backend.file_handler import file_processor
+from src.backend.file_handler import file_processor
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.indexes import index
 import streamlit as st
