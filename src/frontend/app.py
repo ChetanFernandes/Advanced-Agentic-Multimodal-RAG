@@ -10,28 +10,24 @@ import extra_streamlit_components as stx
 st.set_page_config(page_title="RAG App Login", page_icon="🔐")
 st.markdown("<h2>⚡🧠 Advanced Agentic RAG + ChatGPT</h3>", unsafe_allow_html=True)
 
-
-
 # Default works for production (Nginx routing)
-API_URL = os.getenv("BACKEND_URL", "http://localhost/api")
+API_URL = os.getenv("BACKEND_URL", "http://localhost:8000")
 
 log.info("Using Backend URL:", API_URL)
 
 # ---- BACKEND HEALTH CHECK ----
+healthy = False
 try:
     health = requests.get(f"{API_URL}/health", timeout=5)
-    if health.status_code != 200:
-        st.error("⛔ Backend not reachable. Try again in a minute.")
-        st.stop()
-
-    health_data = health.json()
-    if health_data.get("success") != "Backend is healthy":
-        st.error("⚠ Backend not fully ready. Refresh after a few seconds.")
-        st.stop()
+    if health.status_code == 200:
+        health_data = health.json()
+        if health_data.get("success") == "Backend is healthy":
+            healthy = True
 except:
-    st.error("⚠ Backend is starting or unreachable. Refresh after 10-20 seconds.")
-    st.stop()
+    pass
 
+if not healthy:
+    st.warning("⛔ Backend not ready yet… UI will load but features may not work.")
 
 
 JWT_SECRET = st.secrets["JWT_SECRET"]
@@ -53,31 +49,34 @@ st.session_state.setdefault("logging_out", False)
 st.session_state.setdefault("did_oauth", False)
 
 
-# 1. First: Try to load user from cookies
+
 if not st.session_state.get("logging_out"): # If False, then run this block.
+    st.write("Eroror")
     user_cookie = cookie_manager.get("user")
     token_cookie = cookie_manager.get("jwt_token")
 else:
     user_cookie = None
     token_cookie = None
 
-# Clear logout flag for next run
-if "logging_out" in st.session_state:
-    st.session_state.pop("logging_out")
 
-# If cookies contain valid user info → restore session
 if user_cookie and token_cookie:
+    st.write("Eroror")
     st.session_state["user"] = user_cookie
     st.session_state["jwt_token"] = token_cookie
 
 
 # 2. Next: Try OAuth callback ONLY IF no user found in session_state
 # -------------------------------------------------------------
-if not st.session_state.get("user") or not st.session_state.get("jwt_token"):
+if (
+    not st.session_state.get("user") 
+    and not st.session_state.get("jwt_token")
+    and not st.session_state.get("logging_out")
+):
         # Read the token returned from FastAPI callback
+        st.write("Eroror")
         query_params = st.query_params
         token_list = query_params.get("token")
-        st.write(token_list)
+    
 
         if token_list and not st.session_state["did_oauth"]:  
             jwt_token = token_list # extract token from url POST hack
@@ -97,7 +96,7 @@ if not st.session_state.get("user") or not st.session_state.get("jwt_token"):
                 # Store cookies
                 cookie_manager.set("user", user_info, key="cookie_user_setter")
                 cookie_manager.set("jwt_token", jwt_token, key="cookie_jwt_setter")
-       
+    
                 # Prevent repeat OAuth handling
                 st.query_params.clear()
 
@@ -110,16 +109,17 @@ if not st.session_state.get("user") or not st.session_state.get("jwt_token"):
                 st.error("Invalid login token.")
                 st.stop()
 
-
+if "logging_out" in st.session_state:
+    st.session_state.pop("logging_out")
 
 # 3. If still no user → show login screen
 # -------------------------------------------------------------
 if "user" not in st.session_state or st.session_state["user"] is None:
+    st.write("under login fuc")
     st.subheader("Please log in to continue")
     st.markdown(f'<a href="{API_URL}/login" target="_self">👉 Log in with Google</a>', unsafe_allow_html=True)
     st.stop()
 # ---------------------------
-
 
 # 4. User is logged in from cookies or callback → continue
 # ---------------------------
@@ -252,23 +252,23 @@ else:
 st.markdown("<h3>🚪 Log out from your session</h3>", unsafe_allow_html=True)
 
 if  st.button("Logout to wipe out your current session and session memory", type = "primary"):
-    response = requests.post(f"{API_URL}/logout", headers = st.session_state.get("auth_headers"))
-    if response.status_code == 200:
-        st.write(response.json().get("message"))
-        st.session_state["logging_out"] = True 
-        st.session_state.pop("user", None)
-        st.session_state.pop("jwt_token", None)
-        st.session_state.pop("auth_headers", None)
-        #st.session_state.clear()
-        cookie_manager.delete("user", key="cookie_user_setter")
-        cookie_manager.delete("jwt_token", key="cookie_jwt_setter")
-        #st.cache_data.clear()
-        #st.session_state.pop("available_sources", None)
-        st.rerun()
-    else:
-        st.session_state["logging_out"] = True
-        st.session_state.clear()
-        st.rerun()
+    with st.spinner("Logging out..."):
+        response = requests.post(f"{API_URL}/logout", headers = st.session_state.get("auth_headers"))
+        if response.status_code == 200:
+            st.write(response.json().get("message"))
+            st.session_state["logging_out"] = True 
+            st.session_state.pop("user", None)
+            st.session_state.pop("jwt_token", None)
+            st.session_state.pop("auth_headers", None)
+            cookie_manager.delete("user", key="cookie_user_setter")
+            cookie_manager.delete("jwt_token", key="cookie_jwt_setter")
+            st.cache_data.clear()
+            #st.session_state.pop("available_sources", None)
+            st.rerun()
+        else:
+            st.session_state["logging_out"] = True
+            st.session_state.clear()
+            st.rerun()
 
 
 

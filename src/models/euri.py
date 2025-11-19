@@ -19,7 +19,7 @@ def euri_chat(messages, temperature=0.6, max_tokens=500):
         "Authorization": EURI_API_KEY
     }
     payload = {
-        "model": "openai/gpt-4.1-mini",
+        "model": "openai/gpt-oss-20b",
         "messages": messages,
         "temperature": temperature,
         "max_tokens": max_tokens
@@ -34,7 +34,7 @@ async def euri_chat_async(messages, temperature=0.6, max_tokens=500):
         "Authorization": EURI_API_KEY
     }
     payload = {
-        "model": "openai/gpt-4.1-mini",
+        "model": "openai/gpt-oss-20b",
         "messages": messages,
         "temperature": temperature,
         "max_tokens": max_tokens

@@ -15,7 +15,6 @@ from langchain_ollama import ChatOllama
 from src.backend.chunking_retrieveing import question_answering
 from fastapi.responses import JSONResponse
 from src.logger_config import log
-from astrapy import DataAPIClient
 from dotenv import load_dotenv
 from fastapi.responses import RedirectResponse
 from authlib.integrations.starlette_client import OAuth
@@ -65,8 +64,8 @@ async def lifespan(app: FastAPI):
 
         #astra_index = await asyncio.to_thread(app.state.ASTRA_DB.add_index)
 
-        app.state.llm = ChatOllama(model="qwen2.5vl:3b")
-        #app.state.llm = EuriLLM()
+        #app.state.llm = ChatOllama(model="qwen2.5vl:3b")
+        app.state.llm = EuriLLM()
         app.state.web_search_agent = web_agent(app.state.llm)
 
 

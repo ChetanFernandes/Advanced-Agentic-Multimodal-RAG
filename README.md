@@ -90,4 +90,5 @@ utility==1.0
 
 
 ECR URI - 200937443183.dkr.ecr.eu-north-1.amazonaws.com/rag 
-13.51.107.191 - public IP
+16.16.201.72- public IP
+ssh -i "genai-prod-key.pem" ubuntu@16.16.201.72

@@ -11,6 +11,8 @@ all_images/
 .Python
 build/
 develop-eggs/
+app_1.py/
+main_1.py/
 dist/
 downloads/
 eggs/
