@@ -10,10 +10,16 @@ import extra_streamlit_components as stx
 st.set_page_config(page_title="RAG App Login", page_icon="🔐")
 st.markdown("<h2>⚡🧠 Advanced Agentic RAG + ChatGPT</h3>", unsafe_allow_html=True)
 
-# Default works for production (Nginx routing)
-API_URL = os.getenv("BACKEND_URL", "http://localhost:8000")
+# -------------------- BACKEND BASE URL --------------------
+# In Docker (AWS): BACKEND_URL=/api   → calls like /api/health
+# Locally: BACKEND_URL not set       → http://localhost:8000
+if "BACKEND_URL" in os.environ:
+    API_URL = os.environ["BACKEND_URL"].rstrip("/")  # e.g. "/api"
+else:
+    API_URL = "http://localhost:8000"               # local dev
 
-log.info("Using Backend URL:", API_URL)
+log.info(f"Using Backend URL-  {API_URL}")
+
 
 # ---- BACKEND HEALTH CHECK ----
 healthy = False
@@ -109,15 +115,23 @@ if (
                 st.error("Invalid login token.")
                 st.stop()
 
-if "logging_out" in st.session_state:
-    st.session_state.pop("logging_out")
-
-# 3. If still no user → show login screen
-# -------------------------------------------------------------
+# 3️⃣ If no user yet → show Login screen
 if "user" not in st.session_state or st.session_state["user"] is None:
-    st.write("under login fuc")
+    # If we came here after logout, clear the flag now
+    if "logging_out" in st.session_state:
+        st.session_state.pop("logging_out")
+
     st.subheader("Please log in to continue")
-    st.markdown(f'<a href="{API_URL}/login" target="_self">👉 Log in with Google</a>', unsafe_allow_html=True)
+
+    # login URL:
+    # - locally: API_URL = "http://localhost:8000"  → "http://localhost:8000/login"
+    # - docker:  API_URL = "/api"                   → "/api/login"
+    login_url = f"{API_URL}/login"
+
+    st.markdown(
+        f'<a href="{login_url}" target="_self">👉 Log in with Google</a>',
+        unsafe_allow_html=True,
+    )
     st.stop()
 # ---------------------------
 

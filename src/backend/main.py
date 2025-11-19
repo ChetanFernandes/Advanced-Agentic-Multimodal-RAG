@@ -158,7 +158,7 @@ async def auth_callback(request: Request):
         html = f"""
         <html>
         <body onload="document.forms[0].submit()">
-            <form method="GET" action="http://localhost:8501/auth_callback">
+            <form method="GET" action="/auth_callback">
                 <input type="hidden" name="token" value="{jwt_token}">
             </form>
             Redirecting...
