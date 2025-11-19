@@ -105,7 +105,8 @@ origins = [
     "http://127.0.0.1:8501",   # Streamlit (alternative localhost)
     "http://127.0.0.1:8000", 
     "http://localhost:8501/oauth2callback",
-     "http://localhost:8000/auth/callback" 
+    "http://localhost:8000/auth/callback",
+     "*"
 # FastAPI (alternative localhost)
 ]
 
