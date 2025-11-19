@@ -86,3 +86,8 @@ streamlit==1.49.1
 torch==2.8.0+cu126
 unstructured==0.10.30
 utility==1.0
+
+
+
+ECR URI - 200937443183.dkr.ecr.eu-north-1.amazonaws.com/rag 
+13.51.107.191 - public IP

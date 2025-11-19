@@ -11,7 +11,11 @@ st.set_page_config(page_title="RAG App Login", page_icon="🔐")
 st.markdown("<h2>⚡🧠 Advanced Agentic RAG + ChatGPT</h3>", unsafe_allow_html=True)
 
 
-API_URL = "https://rag-frontend-ffw4.onrender.com"
+
+# Default works for production (Nginx routing)
+API_URL = os.getenv("BACKEND_URL", "http://localhost/api")
+
+log.info("Using Backend URL:", API_URL)
 
 # ---- BACKEND HEALTH CHECK ----
 try:
@@ -73,6 +77,7 @@ if not st.session_state.get("user") or not st.session_state.get("jwt_token"):
         # Read the token returned from FastAPI callback
         query_params = st.query_params
         token_list = query_params.get("token")
+        st.write(token_list)
 
         if token_list and not st.session_state["did_oauth"]:  
             jwt_token = token_list # extract token from url POST hack

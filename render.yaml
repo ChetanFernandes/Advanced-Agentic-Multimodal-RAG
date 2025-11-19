@@ -5,11 +5,12 @@ services:
   - name: rag-backend
     type: web
     env: docker
-    rootDir: .                     # 👈 Project ROOT as build context
+    rootDir: .                   
     dockerfilePath: src/backend/Dockerfile
     plan: free              # Needed because Ollama + Qwen need RAM
     autoDeploy: true
-    healthCheckPath: /docs         # FastAPI swagger route to test if backend is live
+    healthCheckPath: /docs        # FastAPI swagger route to test if backend is live
+
 
   # =============================
   # Frontend: Streamlit UI
@@ -22,3 +23,4 @@ services:
     buildCommand: "pip install -r src/frontend/requirements.txt"
     startCommand: "streamlit run src/frontend/app.py --server.port 8501 --server.address 0.0.0.0"
     autoDeploy: true
+

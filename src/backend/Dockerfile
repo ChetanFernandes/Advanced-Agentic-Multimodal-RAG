@@ -4,7 +4,7 @@
 FROM python:3.10.18-slim
 
 # Prevent interactive prompts
-ENV DEBIAN_FRONTEND=noninteractive
+#ENV DEBIAN_FRONTEND=noninteractive
 
 # =============================
 # 2. System Dependencies
@@ -26,9 +26,7 @@ RUN apt-get update && apt-get install -y \
 RUN curl -fsSL https://ollama.com/install.sh | sh
 
 # =============================
-
-# =============================
-# 5. Working Directory
+# 4. Working Directory
 # =============================
 # Inside the Docker container, work inside the folder /app
 WORKDIR /app  
@@ -56,7 +54,7 @@ RUN pip install --no-cache-dir -r /app/requirements.txt
 # =============================
 # 7. Expose FastAPI port
 # =============================
-EXPOSE 10000
+EXPOSE 8000
 
 # =============================
 # 8. Start Ollama + FastAPI together
@@ -66,4 +64,4 @@ EXPOSE 10000
     #ollama pull qwen2.5vl:3b && \
     #uvicorn src.backend.main:app --host 0.0.0.0 --port 8000
 
-CMD uvicorn src.backend.main:app --host 0.0.0.0 --port 10000
+CMD ["bash", "-lc", "ollama serve & sleep 15 && ollama pull qwen2.5vl:3b && uvicorn src.backend.main:app --host 0.0.0.0 --port 8000"]

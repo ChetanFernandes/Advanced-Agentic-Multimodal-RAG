@@ -106,18 +106,9 @@ origins = [
     "http://127.0.0.1:8000", 
     "http://localhost:8501/oauth2callback",
      "http://localhost:8000/auth/callback" 
-
-     # Render Frontend URL (replace with YOURS)
-    "https://rag-frontend-cwqs.onrender.com",
-
-    # Render Backend URL (optional but safe)
-    "https://rag-backend-cwqs.onrender.com",
-
-    # OAuth redirect URLs
-    "https://rag-frontend-cwqs.onrender.com/oauth2callback",
-    "https://rag-backend-cwqs.onrender.com/auth/callback",
 # FastAPI (alternative localhost)
 ]
+
 
 # Cross-Origin Resource Sharing.
 app.add_middleware(CORSMiddleware,

@@ -1,0 +1,45 @@
+version: "3.9"
+
+services:
+
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    container_name: backend
+    restart: always
+    networks:
+      - app-net
+    env_file:
+      - backend/.env
+    ports:
+      - "8000:8000"   # expose backend temporarily for debugging
+
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+    container_name: frontend
+    restart: always
+    networks:
+      - app-net
+    env_file:
+      - frontend/.env
+
+  nginx:
+    image: nginx:stable
+    container_name: nginx
+    restart: always
+    depends_on:
+      - backend
+      - frontend
+    networks:
+      - app-net
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+
+networks:
+  app-net:
+    driver: bridge
