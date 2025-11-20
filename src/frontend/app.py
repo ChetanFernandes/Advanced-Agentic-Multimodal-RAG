@@ -18,7 +18,7 @@ if "BACKEND_URL" in os.environ:
 else:
     API_URL = "http://localhost:8000"               # local dev
 
-log.info(f"Using Backend URL-  {API_URL}")
+log.info(f"Using Backend URL: {API_URL}")
 
 
 # ---- BACKEND HEALTH CHECK ----
@@ -57,7 +57,7 @@ st.session_state.setdefault("did_oauth", False)
 
 
 if not st.session_state.get("logging_out"): # If False, then run this block.
-    st.write("Eroror")
+    #st.write("Eroror")
     user_cookie = cookie_manager.get("user")
     token_cookie = cookie_manager.get("jwt_token")
 else:
@@ -66,7 +66,7 @@ else:
 
 
 if user_cookie and token_cookie:
-    st.write("Eroror")
+    #st.write("Eroror")
     st.session_state["user"] = user_cookie
     st.session_state["jwt_token"] = token_cookie
 
@@ -79,7 +79,7 @@ if (
     and not st.session_state.get("logging_out")
 ):
         # Read the token returned from FastAPI callback
-        st.write("Eroror")
+        #st.write("Eroror")
         query_params = st.query_params
         token_list = query_params.get("token")
     
@@ -143,7 +143,6 @@ st.success(f"Welcome {user['name']} 👋 ({user['email']})")
 st.session_state.auth_headers = {"Authorization": f"Bearer {jwt_token}"}
 user_id = user["sub"]
 
-
 @st.cache_data(ttl=3600)
 def get_sources():
     """Fetches available document sources from backend."""
@@ -188,7 +187,7 @@ if uploaded_file is not None and st.button("Upload File"):
             log.info('Enter upload file function')
             with st.spinner("Processing file..."):
                 files = {"file": (uploaded_file.name, uploaded_file.getvalue())}
-                response = requests.post(f"{API_URL}/upload_file", headers = st.session_state["auth_headers"], files=files)
+                response = requests.post(f"{API_URL}/upload_file",files=files, headers = st.session_state["auth_headers"])
                 if response.status_code == 200:
                     st.success(response.json().get("message"))
                     get_sources.clear()   
@@ -231,7 +230,7 @@ if submitted:
             "selected_doc" : selected_doc 
         }
     with st.spinner("Processing query..."):
-        response = requests.post(f"{API_URL}/query", data = data, files = files, headers = st.session_state["auth_headers"])
+        response = requests.post(f"{API_URL}/query", data = data, files = files) #headers = st.session_state["auth_headers"])
 
     if response.status_code == 200:
         result = response.json()
@@ -262,7 +261,8 @@ if st.session_state.available_sources:
 
 else:
     st.info("No collection in DB exists. Upload your documents to use RAG.")
-  
+
+
 st.markdown("<h3>🚪 Log out from your session</h3>", unsafe_allow_html=True)
 
 if  st.button("Logout to wipe out your current session and session memory", type = "primary"):
@@ -283,6 +283,7 @@ if  st.button("Logout to wipe out your current session and session memory", type
             st.session_state["logging_out"] = True
             st.session_state.clear()
             st.rerun()
+
 
 
 
