@@ -233,9 +233,14 @@ if submitted:
         st.subheader("🧠 Final Answer")
         st.markdown(result.get("result", "No result found."))
     else:
-        response.json().get("status", "Failed to answer question (Internal_error)")
+        try:
+            data = response.json()
+        except Exception:
+            st.error("Backend returned non-JSON response.")
+            st.write("Raw response:", response.text)
+            st.stop()
 
- 
+        status = data.get("status", "Failed to answer question")
     #st.write(response.json().get("result", "No result found") if response.status_code == 200 else response.json().get("status", "Failed to answer question (Internal_error)"))
 
 

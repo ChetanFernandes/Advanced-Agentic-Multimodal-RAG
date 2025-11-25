@@ -7,8 +7,10 @@ from langchain_community.retrievers import BM25Retriever
 from langchain_core.runnables import chain
 from langchain.retrievers import MultiQueryRetriever, EnsembleRetriever, ContextualCompressionRetriever
 #from langchain_community.document_compressors.flashrank_rerank import FlashrankRerank,Ranker
-from langchain_community.document_compressors import FlashrankRerank
+from langchain_community.document_compressors import FlashrankRerank, Ranker
 from src.logger_config import log
+FlashrankRerank.model_rebuild()
+Ranker.model_rebuild()
 
 
 
@@ -142,7 +144,7 @@ class question_answering:
         compression_retriever = await self.initilize_retriever.build(filter_metadata={"source": self.selected_doc})
 
         log.info(f"Passing query to compression retriever: {query}")
-        retrieved_docs = await compression_retriever.aget_relevant_documents(query) #Because now it’s async and can run directly on event loop (fast!).
+        retrieved_docs = compression_retriever.aget_relevant_documents(query) #Because now it’s async and can run directly on event loop (fast!).
 
         if not retrieved_docs:
             log.warning("⚠️ No relevant documents found.")
