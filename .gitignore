@@ -11,8 +11,6 @@ all_images/
 .Python
 build/
 develop-eggs/
-app_1.py/
-main_1.py/
 dist/
 downloads/
 eggs/
@@ -29,8 +27,7 @@ share/python-wheels/
 *.egg
 MANIFEST
 =1.3.2
-main_1.py
-app_1.py
+
 
 # PyInstaller
 #  Usually these files are written by a python script from a template
@@ -77,9 +74,14 @@ instance/
 # Sphinx documentation
 docs/_build/
 
+clip_weights/
+
 # PyBuilder
 .pybuilder/
 target/
+
+models/blobs/
+clip_weights/
 
 # Jupyter Notebook
 .ipynb_checkpoints

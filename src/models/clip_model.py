@@ -30,7 +30,8 @@ def load_clip_model():
             download_root="C:/models/clip_weights"
         )
         '''
-        model_loaded, preprocess_loaded = clip.load("ViT-B/32")
+        
+        model_loaded, preprocess_loaded = clip.load("ViT-B/32",download_root="/app/clip_weights")
 
         model_loaded = model_loaded.to(device)
         model, preprocess = model_loaded, preprocess_loaded

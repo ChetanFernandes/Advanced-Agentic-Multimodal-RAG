@@ -2,6 +2,17 @@ version: "3.9"
 
 services:
 
+  ollama:
+    build:
+      context: .
+      dockerfile: Dockerfile.ollama
+    container_name: ollama
+    restart: always
+    networks:
+      - app-net
+    ports:
+      - "11434:11434"
+
   backend:
     build:
       context: .
@@ -14,6 +25,10 @@ services:
       - app-net
     ports:
       - "8000:8000"
+    environment:
+      - OLLAMA_HOST=http://ollama:11434
+    depends_on:
+      - ollama
 
   frontend:
     build:

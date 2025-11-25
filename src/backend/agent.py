@@ -8,6 +8,10 @@ from src.backend.parser import StrictOutputParser
 from src.logger_config import log
 
 class web_agent:
+    """
+    Web-enabled conversational agent using a ReAct-style LangChain agent
+    + Serper web search + custom LLM wrapper (Euri or any other LangChain LLM).
+    """
     def __init__(self,llm):
         load_dotenv()
         self.SERPER_API_KEY = os.getenv("SERPER_API_KEY")
@@ -61,9 +65,12 @@ class web_agent:
 
             13. Do NOT fabricate Observation lines. Observations will be auto-generated.
 
-            14. Final Answer must be a clear, concise summary that combines everything learned.
+            14. Final answer shouldnt contain repetative points
 
-            15. If no useful information is found, politely say that no reliable information is available.
+            15. Final Answer must be a clear, concise summary that combines everything learned. 
+
+            16. If no useful information is found, politely say that no reliable information is available.
+
 
             The full conversation so far is available in {chat_history}.
             Question: {input}
@@ -90,8 +97,16 @@ class web_agent:
         f"User Query: {query}\n\n"
         f"Web Result:\n{raw_result}"
       )
-        summary = self.llm.predict(summary_prompt)
-        return summary
+        summary = self.llm.invoke(summary_prompt)
+         # Extract text from response
+        if isinstance(summary, dict):
+            return summary.get("output", "")
+
+        if hasattr(summary, "content"):
+            return summary.content
+
+        return str(summary)
+      
     
     def initilze_tool(self):
         tools = [Tool(name="InternetSearch", 
@@ -129,16 +144,6 @@ class web_agent:
         except Exception:
             log.exception("Agent Initilization failed")
 
-
-    def _format_chat_history(self, messages):
-        """
-        Convert chat history into a readable plain-text transcript.
-        """
-        formatted = []
-        for msg in messages:
-            role = "User" if msg.type == "human" else "Assistant"
-            formatted.append(f"{role}: {msg.content}")
-        return "\n".join(formatted[-5:])
 
     async def query_answering_async(self,agent,query,retrived_results,memory):
         """

@@ -29,6 +29,9 @@ COPY src/models /app/src/models
 COPY src/logger_config.py /app/src/logger_config.py
 COPY src/__init__.py /app/src/__init__.py
 
+# 4) Copy CLIP weights
+COPY clip_weights /app/clip_weights
+
 EXPOSE 8000
 
 # 4) Run FastAPI using the same module path your code expects

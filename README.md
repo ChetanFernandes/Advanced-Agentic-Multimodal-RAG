@@ -59,15 +59,11 @@ This README provides end-to-end setup, including Docker, domain setup, SSL, and 
 
 📚 Table of Contents
 
-Project Overview
-
-Architecture
-
-Features
-
-Folder Structure
-
-Environment Variables
+1. Project Overview
+2. Architecture
+3. Features
+4. Folder Structure
+5. Environment Variables
 
 Local Setup (Docker)
 

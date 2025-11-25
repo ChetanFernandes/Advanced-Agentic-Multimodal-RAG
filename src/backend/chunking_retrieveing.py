@@ -4,7 +4,6 @@ from langchain_core.output_parsers import StrOutputParser
 import asyncio
 from langchain.indexes import index
 from langchain_community.retrievers import BM25Retriever
-from typing import List
 from langchain_core.runnables import chain
 from langchain.retrievers import MultiQueryRetriever, EnsembleRetriever, ContextualCompressionRetriever
 #from langchain_community.document_compressors.flashrank_rerank import FlashrankRerank,Ranker

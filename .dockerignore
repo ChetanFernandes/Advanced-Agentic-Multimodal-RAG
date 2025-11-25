@@ -9,3 +9,10 @@ logs/
 notebooks/
 *.ipynb
 .cache/
+.ipynb
+docker-compose.prodN.yml
+.txt
+src/.github
+.md
+
+

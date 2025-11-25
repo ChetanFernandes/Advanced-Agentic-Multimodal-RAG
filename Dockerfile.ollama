@@ -1,0 +1,14 @@
+FROM ollama/ollama:latest
+
+# Create correct folder paths for manifests + blobs
+RUN mkdir -p /root/.ollama/models/manifests/registry.ollama.ai/library/qwen2.5vl
+RUN mkdir -p /root/.ollama/models/blobs
+
+# Copy the manifest file (named '3b')
+COPY models/qwen2.5vl /root/.ollama/models/manifests/registry.ollama.ai/library/qwen2.5vl
+
+# Copy blob files (actual model weights)
+COPY models/blobs /root/.ollama/models/blobs
+
+EXPOSE 11434
+CMD ["ollama", "serve"]

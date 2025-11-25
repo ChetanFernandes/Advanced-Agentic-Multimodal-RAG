@@ -1,0 +1,22 @@
+# Prevent Git from corrupting binary Ollama model blobs
+models/blobs/* binary
+
+# Prevent any LF/CRLF conversion for blobs
+models/blobs/* -text
+
+# Prevent CRLF conversion for manifest/model files
+models/qwen2.5vl/* -text
+
+# Prevent CRLF conversion for any GGUF (if present)
+*.gguf -text
+*.pt -text
+*.bin -text
+*.gz -text
+*.zip -text
+*.tflite -text
+*.onnx -text
+
+# Disable EOL normalization for everything inside models/
+models/* -text
+
+.ipynb -text

@@ -64,8 +64,8 @@ async def lifespan(app: FastAPI):
 
         #astra_index = await asyncio.to_thread(app.state.ASTRA_DB.add_index)
 
-        #app.state.llm = ChatOllama(model="qwen2.5vl:3b")
-        app.state.llm = EuriLLM()
+        app.state.llm = ChatOllama(model="qwen2.5vl:3b", base_url=os.getenv("OLLAMA_HOST"), temperature = 0.2)
+        #app.state.llm = EuriLLM()
         app.state.web_search_agent = web_agent(app.state.llm)
 
 
@@ -131,7 +131,8 @@ async def login(request: Request):
     """Redirect user to Google OAuth2 consent screen"""
     try:
         log.info("Inside login function")
-        redirect_uri = "https://genaipoconline.online/api/auth/callback"
+        #redirect_uri = "https://genaipoconline.online/api/auth/callback"
+        redirect_uri = "http://localhost:8000/auth/callback"
         log.info(f"redirect_uri - {redirect_uri}")
         return await oauth.google.authorize_redirect(request, redirect_uri)
     except Exception:
@@ -156,7 +157,7 @@ async def auth_callback(request: Request):
         html = f"""
         <html>
         <body onload="document.forms[0].submit()">
-            <form method="GET" action="https://genaipoconline.online/">
+            <form method="GET" action="http://localhost:8501">
                 <input type="hidden" name="token" value="{jwt_token}">
             </form>
             Redirecting...
