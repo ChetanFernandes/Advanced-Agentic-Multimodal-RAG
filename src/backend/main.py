@@ -131,8 +131,8 @@ async def login(request: Request):
     """Redirect user to Google OAuth2 consent screen"""
     try:
         log.info("Inside login function")
-        #redirect_uri = "https://genaipoconline.online/api/auth/callback"
-        redirect_uri = "http://localhost:8000/auth/callback"
+        redirect_uri = "https://genaipoconline.online/api/auth/callback"
+        #redirect_uri = "http://localhost:8000/auth/callback"
         log.info(f"redirect_uri - {redirect_uri}")
         return await oauth.google.authorize_redirect(request, redirect_uri)
     except Exception:

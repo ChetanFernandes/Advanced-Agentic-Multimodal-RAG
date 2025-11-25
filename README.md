@@ -5,7 +5,8 @@ git add .
 git commit -m "Initial project upload"
 git branch -M main
 git push -u origin main
-
+sudo apt install -y tree
+tree -L 4
 
 streamlit run src\frontend\app.py
 python -m uvicorn src.backend.main:app --host 0.0.0.0 --port 8000 
@@ -282,9 +283,10 @@ Test from browser:
 http://EC2_IP -> you will ngnis page
 
 PART 5 — PREPARE NGINX SSL DIRECTORIES
-sudo mkdir -p /etc/letsencrypt
-sudo mkdir -p /var/www/html
-sudo chown -R www-data:www-data /var/www/html
+These ensure Certbot + NGINX have the correct directories.
+sudo mkdir -p /etc/letsencrypt - This is where Certbot will store SSL certificates: fullchain.pem, privkey.pem
+sudo mkdir -p /var/www/html - This is needed because Certbot uses HTTP-01 challenge, which requires: /var/www/html/.well-known/acme-challenge/<token>
+sudo chown -R www-data:www-data /var/www/html - Certbot uses Nginx user www-data, so permissions must be correct.
 
 🧩 PART 6 — UPLOAD PROJECT TO EC2
 
@@ -302,6 +304,11 @@ Advanced-RAG/
   src/backend/requirements.txt
   src/frontend/requirements.txt
 
+
+mkdir -p models/blobs
+mkdir -p models/qwen2.5vl
+mkdir -p clip_weights
+
 PART 7 — DOCKER COMPOSE (NO NGINX IN DOCKER) Use this final docker-compose.yml:
 
 PART 8 — UPDATE BACKEND DOCKERFILE - nano src/backend/Dockerfile
@@ -310,6 +317,7 @@ PART 9 — BUILD AND START DOCKER
 docker-compose build backend
 docker-compose up -d --build
 docker ps
+
 
 PART 10 — HOST NGINX CONFIG (WITHOUT SSL)
 sudo nano /etc/nginx/sites-available/genaipoconline
@@ -352,8 +360,8 @@ server {
 }
 
 Enable config:
-sudo ln -s /etc/nginx/sites-available/genaipoconline /etc/nginx/sites-enabled/
-sudo rm /etc/nginx/sites-enabled/default
+sudo ln -s /etc/nginx/sites-available/genaipoconline /etc/nginx/sites-enabled/ - Enable NGINX site
+sudo rm /etc/nginx/sites-enabled/default - remove deafult config
 sudo nginx -t
 sudo systemctl reload nginx
 

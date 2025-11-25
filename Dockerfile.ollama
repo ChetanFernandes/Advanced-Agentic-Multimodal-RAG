@@ -11,4 +11,4 @@ COPY models/qwen2.5vl /root/.ollama/models/manifests/registry.ollama.ai/library/
 COPY models/blobs /root/.ollama/models/blobs
 
 EXPOSE 11434
-CMD ["ollama", "serve"]
+

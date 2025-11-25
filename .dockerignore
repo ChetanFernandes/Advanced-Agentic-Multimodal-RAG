@@ -1,18 +1,15 @@
-.git
-__pycache__/
-*.pyc
-.env
 venv/
-*.db
+.venv/
+__pycache__/
 *.log
-logs/
-notebooks/
-*.ipynb
-.cache/
-.ipynb
-docker-compose.prodN.yml
-.txt
-src/.github
-.md
+*.db
+*.sqlite
+*.sqlite3
+node_modules/
+models/
+*.pt
+*.gguf
+*.pdf
+.git/
 
 
