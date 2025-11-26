@@ -261,7 +261,7 @@ Attach key pair
 PART 2 — CONNECT TO EC2
 chmod 400 "genai-prod-key.pem"
 
-ssh -i genai-prod-key.pem ubuntu@13.53.175.219
+ssh -i genai-prod-key.pem ubuntu@51.21.195.67
 
 PART 3 — INSTALL DOCKER & DOCKER COMPOSE
 sudo apt update
@@ -364,8 +364,24 @@ server {
         proxy_buffering off;
     }
 
+    location /static/ {
+        #proxy_pass http://frontend:8501/static/;
+        proxy_pass http://127.0.0.1:8501/static/;
+        proxy_http_version 1.1;
+    }
+
+    location /stream {
+        proxy_pass http://127.0.0.1:8501/stream;
+        #proxy_pass http://frontend:8501/static/;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+    }
+
+
     # FastAPI backend
     location /api/ {
+        rewrite ^/api/(.*)$ /$1 break;
         proxy_pass http://127.0.0.1:8000/;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
@@ -376,7 +392,7 @@ server {
 }
 
 Enable config:
-sudo ln -s /etc/nginx/sites-available/genaipoconline /etc/nginx/sites-enabled/ - Enable NGINX site
+sudo ln -s /etc/nginx/sites-available/genaipoconline.conf /etc/nginx/sites-enabled/ - Enable NGINX site
 sudo rm /etc/nginx/sites-enabled/default - remove deafult config
 sudo nginx -t
 sudo systemctl reload nginx
