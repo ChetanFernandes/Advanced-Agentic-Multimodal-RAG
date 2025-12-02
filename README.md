@@ -272,6 +272,30 @@ sudo systemctl start docker
 sudo usermod -aG docker ubuntu
 newgrp docker
 docker --version
+
+ome more method
+Step 1: Add Docker’s official GPG key
+sudo apt update
+sudo apt install -y ca-certificates curl gnupg
+sudo install -m 0755 -d /etc/apt/keyrings
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+sudo chmod a+r /etc/apt/keyrings/docker.gpg
+Step 2: Add Docker repo
+echo \
+  "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] \
+  https://download.docker.com/linux/ubuntu \
+  $(lsb_release -cs) stable" | \
+  sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+
+Step 3: Update apt
+sudo apt update
+Step 4: Install Docker correctly
+sudo apt install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+docker --version
+sudo systemctl status docker
+
+
+
 sudo apt install -y docker-compose
 docker-compose --version
 
@@ -281,6 +305,8 @@ sudo apt install -y nginx
 sudo systemctl enable nginx
 sudo systemctl start nginx
 sudo nginx -t
+
+sudo tail -f /var/log/nginx/access.log
 
 Test from browser:
 http://EC2_IP -> you will ngnis page
@@ -400,7 +426,7 @@ sudo systemctl reload nginx
 
 PART 11 — INSTALL CERTBOT SSL
 sudo apt install -y certbot python3-certbot-nginx
-sudo certbot --nginx --staging -d genaipoconline.online -d www.genaipoconline.online
+sudo certbot --nginx -d genaipoconline.online -d www.genaipoconline.online
 
 PART 12 — VERIFY EVERYTHING
 Frontend:

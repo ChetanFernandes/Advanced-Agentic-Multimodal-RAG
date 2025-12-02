@@ -144,6 +144,9 @@ def get_sources():
     """Fetches available document sources from backend."""
     try:
         #st.write("Entering load_source function")
+        if "auth_headers" not in st.session_state or st.session_state["auth_headers"] is None:
+            st.warning("Please log in first.")
+            st.stop()
         response = requests.get(f"{API_URL}/available_sources", headers = st.session_state.get("auth_headers"))
         #st.write(f"🔍 Response status: {response.status_code}")
         #st.write(f"🔍 Raw response: {response.text}")
