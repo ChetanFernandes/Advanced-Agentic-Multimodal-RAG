@@ -173,16 +173,21 @@ if not st.session_state["sources_loaded"]:
 
 st.markdown("<h3>📁 Upload File to Build Your RAG System</h3>", unsafe_allow_html=True)
 
-
+MAX_UPLOAD_MB = 200
 #File uploaded
 uploaded_file = st.file_uploader(
     "Choose file",
     type=["xlsx", "docx", "pptx", "csv", "txt", "pdf"],
     key=f"upload_{st.session_state['uploader_key']}"
+
 )
 
 if uploaded_file is not None and st.button("Upload File"):
         try:
+            size_mb = uploaded_file.size / (1024 * 1024)
+            if size_mb > MAX_UPLOAD_MB:
+                st.error(f"File is too large! Maximum allowed size is {MAX_UPLOAD_MB} MB.")
+                st.stop()
             log.info('Enter upload file function')
             with st.spinner("Processing file..."):
                 files = {"file": (uploaded_file.name, uploaded_file.getvalue())}

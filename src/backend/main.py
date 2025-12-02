@@ -204,7 +204,7 @@ async def available_sources(user: dict = Depends(verify_jwt)):
         )
 
 
-
+MAX_UPLOAD_MB = 200
 @app.post("/upload_file")
 async def upload_file(user: dict = Depends(verify_jwt), file: UploadFile = File(...)):
     try:
@@ -214,6 +214,10 @@ async def upload_file(user: dict = Depends(verify_jwt), file: UploadFile = File(
         user_id = user["sub"]  # Google unique ID
         log.info(f"user_id - {user_id}")
         collection_name = f"{user_id}_collection"
+        
+        data = await file.read()
+        if len(data) > MAX_UPLOAD_MB *1024 * 1024:
+            raise HTTPException(status_code=413, detail=f"File too large. Max allowed is {MAX_UPLOAD_MB} MB")
 
         astra_index = await asyncio.to_thread(app.state.ASTRA_DB.add_index, collection_name)
         vector_store = astra_index["vector_store"]
@@ -233,7 +237,6 @@ async def upload_file(user: dict = Depends(verify_jwt), file: UploadFile = File(
 
         user_data.update(astra_index)
 
-        data = await file.read()
         file.file.seek(0)
         log.info(f"Uploading file: {file.filename}, size={len(data)}")
         log.info(f"user_id -> {user_id}")

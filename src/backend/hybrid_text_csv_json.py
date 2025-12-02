@@ -5,6 +5,7 @@ import uuid
 from src.logger_config import log
 import pandas as pd
 from langchain_community.document_loaders.json_loader import JSONLoader 
+from io import BytesIO
 
 
 def txt_file_processing(file_name,file_bytes):
@@ -25,7 +26,7 @@ def txt_file_processing(file_name,file_bytes):
     
 def csv_file_processing(file_name,file_bytes):
         try:
-            df = pd.read_csv(file_bytes)
+            df = pd.read_csv(BytesIO(file_bytes))
             documents = [Document(page_content = row.to_json(), metadata = {"source": file_name, "row": id,"type":"csv"}) for id, row in df.iterrows()]
             if not documents:
                 log.warning(f"Text parsed but no valid text documents found in {file_name}")

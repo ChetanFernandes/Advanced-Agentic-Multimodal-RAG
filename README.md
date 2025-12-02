@@ -262,7 +262,7 @@ Attach key pair
 PART 2 — CONNECT TO EC2
 chmod 400 "AG.pem"
 
-ssh -i RAG.pem ubuntu@13.53.96.223
+ssh -i RAG.pem ubuntu@13.49.76.9
 
 PART 3 — INSTALL DOCKER & DOCKER COMPOSE
 sudo apt update

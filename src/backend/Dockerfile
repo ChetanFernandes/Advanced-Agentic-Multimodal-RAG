@@ -24,6 +24,8 @@ RUN pip install --no-cache-dir -r /app/requirements.txt
 # 🔥 Add NLTK required datasets
 RUN python3 -m nltk.downloader punkt
 RUN python3 -m nltk.downloader punkt_tab
+RUN python3 -m nltk.downloader punkt punkt_tab averaged_perceptron_tagger averaged_perceptron_tagger_eng
+
 
 # 2) Create src package folder inside container
 RUN mkdir -p /app/src
