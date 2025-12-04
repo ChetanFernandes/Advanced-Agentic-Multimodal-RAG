@@ -132,8 +132,8 @@ async def login(request: Request):
     """Redirect user to Google OAuth2 consent screen"""
     try:
         log.info("Inside login function")
-        #redirect_uri = "https://genaipoconline.online/api/auth/callback"
-        redirect_uri = "http://localhost:8000/auth/callback"
+        redirect_uri = "https://genaipoconline.online/api/auth/callback"
+        #redirect_uri = "http://localhost:8000/auth/callback"
         log.info(f"redirect_uri - {redirect_uri}")
         return await oauth.google.authorize_redirect(request, redirect_uri)
     except Exception:
@@ -160,7 +160,7 @@ async def auth_callback(request: Request):
         html = f"""
         <html>
         <body onload="document.forms[0].submit()">
-        <form method="GET" action=http://127.0.0.1:8501>
+        <form method="GET" action=https://genaipoconline.online/>
                 <input type="hidden" name="token" value="{jwt_token}">
             </form>
             Redirecting...
@@ -181,25 +181,22 @@ async def available_sources(user: dict = Depends(verify_jwt)):
         user_id = user["sub"].strip() # Google unique ID
         log.info(f"Authenticated user: {user['email']} ({user_id})")
         try:
-            user_data = app.state.user_collections.get(user_id, {})
-            keys = list(user_data.keys())
-            log.info(f"keys extracted from user_is {keys}")
-            if "vector_store" not in keys:
-                log.warning(f"No vector_store found for user_id={user_id}")
-                return JSONResponse(content={"sources": [], "message": "No collection found for user {user_id}"},status_code=404)
-            else:
-                vector_store = app.state.user_collections[user_id].get("vector_store")  
+            if user_id not in app.state.user_collections:
+                app.state.user_collections[user_id] = {}
+            
+            vector_store = app.state.user_collections[user_id].get("vector_store", [])
+            if not vector_store:
+                return JSONResponse(content={"sources": []},status_code=404)
+            if vector_store:
+                vector_store = app.state.user_collections[user_id].get("vector_store")
                 all_docs = await vector_store.asimilarity_search("", k=1000)
                 app.state.available_doc_names = list({doc.metadata.get("source") for doc in all_docs if doc.metadata.get("source")})
                 log.info(f"available_doc_names -> {app.state.available_doc_names}")
                 return JSONResponse(content={"sources": app.state.available_doc_names,"user_d" :user_id},status_code = 200)
-            
         except Exception:
             log.exception("Failed to get available resources")
             return JSONResponse(
-                content={"sources": [], "message": "Failed to get available resources"},
-                status_code=500
-        )
+                content={"sources": [], "message": "Failed to get available resources"}, status_code=500)
 
 
 MAX_UPLOAD_MB = 200

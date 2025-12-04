@@ -1,254 +1,164 @@
 import streamlit as st
 import requests
-import time
-import jwt, sys,os
+import json
+import os
+import jwt,time
+from extra_streamlit_components import CookieManager
+from logger_config import log
 
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
-from src.logger_config import log
-import extra_streamlit_components as stx
 
 st.set_page_config(page_title="RAG App Login", page_icon="🔐")
-st.markdown("<h2>⚡🧠 Advanced Agentic RAG + ChatGPT</h3>", unsafe_allow_html=True)
+st.markdown("<h2>⚡🧠 Advanced Agentic RAG + ChatGPT</h2>", unsafe_allow_html=True)
 
 # -------------------- BACKEND BASE URL --------------------
-# In Docker (AWS): BACKEND_URL=/api   → calls like /api/health
-# Locally: BACKEND_URL not set       → http://localhost:8000
 API_URL = os.getenv("BACKEND_URL", "http://localhost:8000").rstrip("/")
-log.info(f"Using Backend URL: {API_URL}")
-
-
-# ---- BACKEND HEALTH CHECK ----
-healthy = False
-try:
-    health = requests.get(f"{API_URL}/health", timeout=5)
-    if health.status_code == 200:
-        health_data = health.json()
-        if health_data.get("success") == "Backend is healthy":
-            healthy = True
-except:
-    pass
-
-if not healthy:
-    st.warning("⛔ Backend not ready yet… UI will load but features may not work.")
-
-
 JWT_SECRET = st.secrets["JWT_SECRET"]
 JWT_ALGO = "HS256"
-cookie_manager = stx.CookieManager()
+cookie_manager = CookieManager()
 
-
-# Initialize flags
-
+# Initialize session state
 st.session_state.setdefault("user", None)
 st.session_state.setdefault("jwt_token", None)
 st.session_state.setdefault("auth_headers", None)
-st.session_state.setdefault("uploader_key", 0)
 st.session_state.setdefault("sources_loaded", False)
-st.session_state.setdefault("available_sources", [])
+st.session_state.setdefault("uploader_key", 0)
 st.session_state.setdefault("uploaded_file", [])
 st.session_state.setdefault("selected_doc", [])
-st.session_state.setdefault("logging_out", False) # setdefault(key, value) checks whether the given key exists in st.session_state
-st.session_state.setdefault("did_oauth", False)
 
 
+user_cookie = cookie_manager.get("user") or None
+token_cookie = cookie_manager.get("jwt_token") or None
 
-if not st.session_state.get("logging_out"): # If False, then run this block.
-    user_cookie = cookie_manager.get("user")
-    token_cookie = cookie_manager.get("jwt_token")
-else:
-    user_cookie = None
-    token_cookie = None
-
-
+# Validate the token and load user information
 if user_cookie and token_cookie:
-    st.session_state["user"] = user_cookie
-    st.session_state["jwt_token"] = token_cookie
+    try:
+        # Decode the JWT token
+        decoded = jwt.decode(token_cookie, JWT_SECRET, algorithms=[JWT_ALGO])
+        st.session_state["user"] = user_cookie
+        st.session_state["jwt_token"] = token_cookie
+    except (jwt.InvalidTokenError, json.JSONDecodeError):
+        # If the token is invalid, clear the session state
+        st.session_state.clear()
 
+# Handle login via OAuth callback
+if not st.session_state["user"] and not st.session_state["jwt_token"]:
+    token_list = st.query_params.get("token")
+    if token_list:
+        try:
+            decoded = jwt.decode(token_list, JWT_SECRET, algorithms=[JWT_ALGO])
+            user_info = decoded["user"]
+            st.session_state["user"] = user_info
+            st.session_state["jwt_token"] = token_list
 
-# 2. Next: Try OAuth callback ONLY IF no user found in session_state
-# -------------------------------------------------------------
-if (
-    not st.session_state.get("user") 
-    and not st.session_state.get("jwt_token")
-    and not st.session_state.get("logging_out")
-):
-        # Read the token returned from FastAPI callback
-        #st.write("Eroror")
-        query_params = st.query_params
-        token_list = query_params.get("token")
-    
+            # Store cookies for the user
+            cookie_manager.set("user", json.dumps(user_info), key="cookie_user_setter")
+            cookie_manager.set("jwt_token", token_list, key="cookie_jwt_setter")
 
-        if token_list and not st.session_state["did_oauth"]:  
-            jwt_token = token_list # extract token from url POST hack
+            # Clear query parameters to prevent processing again
+            st.query_params.clear()
+        except (jwt.ExpiredSignatureError, jwt.InvalidTokenError):
+            st.error("Invalid or expired login token.")
+            st.stop()
 
-            try:
-                decoded = jwt.decode(jwt_token, JWT_SECRET, algorithms=[JWT_ALGO])
-                user_info = decoded["user"]
-
-                # Save login info in session
-                st.session_state["user"] = user_info
-                st.session_state["jwt_token"] = jwt_token
-
-
-                #Prevent repeat OAuth handling
-                st.session_state["did_oauth"] = True 
-
-                # Store cookies
-                cookie_manager.set("user", user_info, key="cookie_user_setter")
-                cookie_manager.set("jwt_token", jwt_token, key="cookie_jwt_setter")
-    
-                # Prevent repeat OAuth handling
-                st.query_params.clear()
-
-        
-            except jwt.ExpiredSignatureError:
-                st.error("Login expired! Please log in again.")
-                st.stop()
-
-            except jwt.InvalidTokenError:
-                st.error("Invalid login token.")
-                st.stop()
-
-# 3️⃣ If no user yet → show Login screen
-if "user" not in st.session_state or st.session_state["user"] is None:
-    # If we came here after logout, clear the flag now
-    if "logging_out" in st.session_state:
-        st.session_state.pop("logging_out")
-
+# Redirect to login if not authenticated
+if not st.session_state["user"]:
     st.subheader("Please log in to continue")
-
-    # login URL:
-    # - locally: API_URL = "http://localhost:8000"  → "http://localhost:8000/login"
-    # - docker:  API_URL = "/api"                   → "/api/login"
     login_url = f"{API_URL}/login"
-
-    st.markdown(
-        f'<a href="{login_url}" target="_self">👉 Log in with Google</a>',
-        unsafe_allow_html=True,
-    )
+    st.markdown(f'<a href="{login_url}" target="_self">👉 Log in with Google</a>', unsafe_allow_html=True)
     st.stop()
-# ---------------------------
 
-# 4. User is logged in from cookies or callback → continue
-# ---------------------------
+# If a user is logged in, display their information
 user = st.session_state["user"]
 jwt_token = st.session_state["jwt_token"]
 st.success(f"Welcome {user['name']} 👋 ({user['email']})")
 st.session_state.auth_headers = {"Authorization": f"Bearer {jwt_token}"}
 user_id = user["sub"]
 
-@st.cache_data(ttl=3600)
+# --- Available Sources ---
 def get_sources():
-    """Fetches available document sources from backend."""
-    try:
-        #st.write("Entering load_source function")
-        if "auth_headers" not in st.session_state or st.session_state["auth_headers"] is None:
-            st.warning("Please log in first.")
-            login_url = f"{API_URL}/login"
-            st.markdown(f'<a href="{login_url}" target="_self">👉 Log in with Google</a>',unsafe_allow_html=True)
-            st.stop()
-
-        response = requests.get(f"{API_URL}/available_sources", headers = st.session_state.get("auth_headers"))
-
-        if response.status_code == 200:
-            return response.json().get("sources", [])
-        else:
-            log.info("No available resources found")
-            return []
-
-    except Exception as e:
-        log.info("Entering except function")
-        log.exception(f"Failed to load sources: {e}")
+    if "auth_headers" not in st.session_state or st.session_state["auth_headers"] is None:
+        st.warning("Please log in first.")
         return []
-
+    
+    response = requests.get(f"{API_URL}/available_sources", headers=st.session_state["auth_headers"])
+    if response.status_code == 200:
+        return response.json().get("sources", [])
+    else:
+        #log.info("No available resources found")
+        return response.json().get("sources", [])
 
 if not st.session_state["sources_loaded"]:
     st.session_state["available_sources"] = get_sources()
     st.session_state["sources_loaded"] = True
 
-
-# --- UI HEADER --
-
-
+# --- File Upload Section ---
 st.markdown("<h3>📁 Upload File to Build Your RAG System</h3>", unsafe_allow_html=True)
-
-MAX_UPLOAD_MB = 200
-#File uploaded
 uploaded_file = st.file_uploader(
     "Choose file",
     type=["xlsx", "docx", "pptx", "csv", "txt", "pdf"],
-    key=f"upload_{st.session_state['uploader_key']}"
+    key=f"upload_{st.session_state['uploader_key']}")
 
-)
-
-if uploaded_file is not None and st.button("Upload File"):
-        try:
-            size_mb = uploaded_file.size / (1024 * 1024)
-            if size_mb > MAX_UPLOAD_MB:
-                st.error(f"File is too large! Maximum allowed size is {MAX_UPLOAD_MB} MB.")
-                st.stop()
-            log.info('Enter upload file function')
-            with st.spinner("Processing file..."):
-                files = {"file": (uploaded_file.name, uploaded_file.getvalue())}
-                response = requests.post(f"{API_URL}/upload_file",files=files, headers = st.session_state["auth_headers"])
-                if response.status_code == 200:
-                    st.success(response.json().get("message"))
-                    get_sources.clear()   
-                    st.session_state["sources_loaded"] = False
-                    st.session_state.uploader_key += 1  # new widget next time
-                    st.session_state["uploaded_file"] = None
-                    st.rerun()
-                else:
-                    st.error(response.json().get("message"))
-        except Exception:
-            log.exception("File upload failed")
-
-
-
+if uploaded_file and st.button("Upload File"):
+    try:
+        with st.spinner("Processing file..."):
+            files = {"file": (uploaded_file.name, uploaded_file.getvalue())}
+            response = requests.post(f"{API_URL}/upload_file", files=files, headers=st.session_state["auth_headers"])
+            if response.status_code == 200:
+                st.success(response.json().get("message"))
+                st.session_state["available_sources"] = get_sources()
+                st.session_state.uploader_key += 1 
+                st.session_state["uploaded_file"] = None
+                st.rerun()  # Refresh the list
+            else:
+                st.error(response.json().get("message"))
+    except Exception as e:
+        st.error("File upload failed.")
+        st.exception(e)
 
 # --- Query Interface ---
-
 st.markdown("<h3>🧠🖼️ Multimodal Query Interface</h3>", unsafe_allow_html=True)
-
 with st.form("query_form"):
     user_query = st.text_input("Enter your query")
-    selected_doc = st.selectbox("Select document to query: ", st.session_state.available_sources,index=None)  # optionally get from API
+    selected_doc = st.selectbox("Select document to query: ", st.session_state["available_sources"], index=None)
     uploaded_image = st.file_uploader("Upload an image (optional):", type=["png", "jpg", "jpeg"])
     submitted = st.form_submit_button("Submit")
 
 if submitted:
     if not user_query.strip():
         st.error("Please enter a question.")
-        time.sleep(2)
-        st.rerun()
-      
-
-    if uploaded_image:
-        files = {'image': (uploaded_image.name, uploaded_image.getvalue(),uploaded_image.type)}
     else:
-        files = {}
-
-    data = {
-            "query":user_query,
-            "selected_doc" : selected_doc 
+        data = {
+            "query": user_query,
+            "selected_doc": selected_doc
         }
-    with st.spinner("Processing query..."):
-        response = requests.post(f"{API_URL}/query", data = data, files = files, headers = st.session_state["auth_headers"])
 
-    if response.status_code == 200:
-        result = response.json()
-        st.subheader("🧠 Final Answer")
-        st.markdown(result.get("result", "No result found."))
-    else:
-        try:
-            data = response.json()
-        except Exception:
-            st.error("Backend returned non-JSON response.")
-            st.write("Raw response:", response.text)
-            st.stop()
+        
+        if uploaded_image:
+            files = {'image': (uploaded_image.name, uploaded_image.getvalue(),uploaded_image.type)}
+        else:
+            files = {}
 
-        status = data.get("status", "Failed to answer question")
-    #st.write(response.json().get("result", "No result found") if response.status_code == 200 else response.json().get("status", "Failed to answer question (Internal_error)"))
+        data = {
+                "query":user_query,
+                "selected_doc" : selected_doc 
+            }
+        
+        with st.spinner("Processing query..."):
+            response = requests.post(f"{API_URL}/query", data=data, headers=st.session_state["auth_headers"])
+            if response.status_code == 200:
+                result = response.json()
+                st.subheader("🧠 Final Answer")
+                st.markdown(result.get("result", "No result found."))
+            else:
+                try:
+                    data = response.json()
+                except Exception:
+                    st.error("Backend returned non-JSON response.")
+                    st.write("Raw response:", response.text)
+                    st.stop()
+
+                status = data.get("status", "Failed to answer question")
+
 
 
 st.markdown("<h3>🗑️ Manage Collection</h3>", unsafe_allow_html=True)
@@ -256,44 +166,97 @@ st.markdown("<h3>🗑️ Manage Collection</h3>", unsafe_allow_html=True)
 if st.session_state.available_sources:
     if st.button("Delete your document uploaded in DB"):
         with st.spinner("Deleting your collection..."):
-                response = requests.delete(f"{API_URL}/delete_collection",params={"user_id": user_id},timeout=120)
-                if response.status_code == 200:
-                    st.success(response.json().get("message", "Collection deleted successfully."))
-                    get_sources.clear()
-                    st.session_state["sources_loaded"] = False
-                    st.session_state.pop("selected_doc", False)
-                    st.rerun()
-                else:
-                    result = response.json().get("message", "Failed to delete collection.")
-                    st.error(result)
+            response = requests.delete(f"{API_URL}/delete_collection",params={"user_id": user_id},timeout=120)
+            if response.status_code == 200:
+                st.success(response.json().get("message", "Collection deleted successfully."))
+                st.session_state["available_sources"] = []
+                st.session_state["sources_loaded"] = False
+                st.session_state.pop("selected_doc", False)
+                st.rerun()
+            else:
+                result = response.json().get("message", "Failed to delete collection.")
+                st.error(result)
 
 else:
     st.info("No collection in DB exists. Upload your documents to use RAG.")
 
 
+# Debugging: Check current cookie state before deletion
+# --- Logout Section ---
 st.markdown("<h3>🚪 Log out from your session</h3>", unsafe_allow_html=True)
-
-if  st.button("Logout to wipe out your current session and session memory", type = "primary"):
+if st.button("Logout", key="logout_button"):
     with st.spinner("Logging out..."):
-        response = requests.post(f"{API_URL}/logout", headers = st.session_state.get("auth_headers"))
-        if response.status_code == 200:
-            st.write(response.json().get("message"))
-            st.session_state["logging_out"] = True 
-            st.session_state.pop("user", None)
-            st.session_state.pop("jwt_token", None)
-            st.session_state.pop("auth_headers", None)
+        try:
+            response = requests.post(f"{API_URL}/logout", headers={"Authorization": f"Bearer {jwt_token}"})
+    
+            
+            # Debugging: Show backend response status (can be removed later
+            log.info("Pre deletion")
+            log.info(f"{cookie_manager.get('user')}")
+            log.info(f"{cookie_manager.get('jwt_token')}") 
+
             cookie_manager.delete("user", key="cookie_user_setter")
             cookie_manager.delete("jwt_token", key="cookie_jwt_setter")
-            st.cache_data.clear()
-            #st.session_state.pop("available_sources", None)
-            st.rerun()
-        else:
-            st.session_state["logging_out"] = True
-            st.session_state.clear()
-            st.rerun()
 
 
+            st.session_state.clear() 
+            
+            log.info("Post del")
+            log.info(f"{cookie_manager.get('user')}")
+            log.info(f"{cookie_manager.get('jwt_token')}")
+         
 
+             # Hard redirect to LOGIN page (NOT rerun!)
+            login_url = f"{API_URL}/login"
+
+            st.write(f"""
+                <meta http-equiv="refresh" content="0; url={login_url}" />
+            """, unsafe_allow_html=True)
+
+            st.stop()
+            
+                    
+        except requests.exceptions.ConnectionError:
+            st.error("Could not connect to the backend. Please check your network or try again later.")
+            # Still clear frontend state and redirect to login, as the user can't interact meaningfully.
+            cookie_manager.delete("user", key="cookie_user_setter")
+            cookie_manager.delete("jwt_token", key="cookie_jwt_setter")
+            st.session_state.clear() 
+            log.info("Post del")
+            log.info(f"{cookie_manager.get('user')}")
+            log.info(f"{cookie_manager.get('jwt_token')}")
+         
+             # Hard redirect to LOGIN page (NOT rerun!)
+            login_url = f"{API_URL}/login"
+
+            st.write(f"""
+                <meta http-equiv="refresh" content="0; url={login_url}" />
+            """, unsafe_allow_html=True)
+
+            st.stop()
+
+        except Exception as e:
+            # Catch any other unexpected exceptions
+            log.exception(f"An unexpected error occurred during logout: {e}")
+            st.error("An unexpected error occurred during logout. Please try again.")
+            cookie_manager.delete("user", key="cookie_user_setter")
+            cookie_manager.delete("jwt_token", key="cookie_jwt_setter")
+            st.session_state.clear() 
+            log.info("Post del")
+            log.info(f"{cookie_manager.get('user')}")
+            log.info(f"{cookie_manager.get('jwt_token')}")
+         
+
+             # Hard redirect to LOGIN page (NOT rerun!)
+            login_url = f"{API_URL}/login"
+
+            st.write(f"""
+                <meta http-equiv="refresh" content="0; url={login_url}" />
+            """, unsafe_allow_html=True)
+
+            st.stop()
+         
+     
 
 
 
