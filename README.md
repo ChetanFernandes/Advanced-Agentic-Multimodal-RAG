@@ -36,8 +36,6 @@ This README provides an end-to-end guide covering architecture, features, setup,
         - It supports PDFs, PowerPoints, Excel files, images, and text documents, converts them into embeddings, and stores them in **AstraDB Vector DB** 
         - and uses a custom Agent LLM pipeline to answer questions. 
         - Users log in via **Google OAuth2**, upload documents through the **Streamlit UI**, and interact with a **ChatGPT-like conversational interface**
-        
-    
     Core components:
       a. AstraDB Vector Store for embeddings + retrieval
       b. Google OAuth2 for secure login
@@ -52,6 +50,7 @@ This README provides an end-to-end guide covering architecture, features, setup,
 <img width="381" height="655" alt="image" src="https://github.com/user-attachments/assets/6cba5fcb-a1eb-488a-8b94-c0e3ef5033fc" />
 
 🚀 3. Features of RAG
+ 
       🧠 Agentic Intelligence
         a. Multi-vector retrieval
         b. LLM-based query rewriting
@@ -265,6 +264,7 @@ Tracking using Langsmith:-
 | **Slowest (P99)**         | **13–14 sec**    | Only 1% of requests are slow     |
 
 🎉 Author - Chetan Fernandis - Full-Stack GenAI Engineer • RAG Systems • LLMOps • MLOps
+
 
 
 
