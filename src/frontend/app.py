@@ -4,7 +4,10 @@ import json
 import os
 import jwt,time
 from extra_streamlit_components import CookieManager
-from logger_config import log
+import sys, os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
+from src.logger_config import log
 
 
 st.set_page_config(page_title="RAG App Login", page_icon="🔐")
@@ -189,14 +192,18 @@ if st.button("Logout", key="logout_button"):
         try:
             response = requests.post(f"{API_URL}/logout", headers={"Authorization": f"Bearer {jwt_token}"})
     
-            
+            user_val = cookie_manager.get("user")
+            jwt_val = cookie_manager.get("jwt_token")
             # Debugging: Show backend response status (can be removed later
             log.info("Pre deletion")
-            log.info(f"{cookie_manager.get('user')}")
-            log.info(f"{cookie_manager.get('jwt_token')}") 
+            log.info(f"{user_val}")
+            log.info(f"{jwt_val}") 
 
-            cookie_manager.delete("user", key="cookie_user_setter")
-            cookie_manager.delete("jwt_token", key="cookie_jwt_setter")
+            if user_val is not None:
+                cookie_manager.delete("user", key="cookie_user_delete_3")
+
+            if jwt_val is not None:
+                cookie_manager.delete("jwt_token", key="cookie_jwt_delete_3")
 
 
             st.session_state.clear() 
@@ -219,8 +226,8 @@ if st.button("Logout", key="logout_button"):
         except requests.exceptions.ConnectionError:
             st.error("Could not connect to the backend. Please check your network or try again later.")
             # Still clear frontend state and redirect to login, as the user can't interact meaningfully.
-            cookie_manager.delete("user", key="cookie_user_setter")
-            cookie_manager.delete("jwt_token", key="cookie_jwt_setter")
+            cookie_manager.delete("user", key="cookie_user_delete_1")
+            cookie_manager.delete("jwt_token", key="cookie_jwt_delete_1")
             st.session_state.clear() 
             log.info("Post del")
             log.info(f"{cookie_manager.get('user')}")
@@ -239,8 +246,8 @@ if st.button("Logout", key="logout_button"):
             # Catch any other unexpected exceptions
             log.exception(f"An unexpected error occurred during logout: {e}")
             st.error("An unexpected error occurred during logout. Please try again.")
-            cookie_manager.delete("user", key="cookie_user_setter")
-            cookie_manager.delete("jwt_token", key="cookie_jwt_setter")
+            cookie_manager.delete("user", key="cookie_user_delete_2")
+            cookie_manager.delete("jwt_token", key="cookie_jwt_delete_2")
             st.session_state.clear() 
             log.info("Post del")
             log.info(f"{cookie_manager.get('user')}")

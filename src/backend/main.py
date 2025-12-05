@@ -5,7 +5,7 @@ from fastapi import FastAPI, Query, UploadFile, File, Form, Request, Header, HTT
 from fastapi.middleware.cors import CORSMiddleware 
 from contextlib import asynccontextmanager
 from src.backend.DB import ConnectToAstraDB
-from src.backend.agent import web_agent
+from backend.agent import web_agent
 from src.backend.Adding_files import Adding_files_DB
 from src.backend.utilis import *
 from src.backend.image_processing_bytes import extract_Image_summaries
@@ -63,7 +63,7 @@ async def lifespan(app: FastAPI):
         app.state.ASTRA_DB = ConnectToAstraDB()
 
         #astra_index = await asyncio.to_thread(app.state.ASTRA_DB.add_index)
-        app.state.llm = ChatOllama(model="qwen2.5vl:3b", base_url=os.getenv("OLLAMA_HOST"), temperature = 0.2)
+        app.state.llm = ChatOllama(model="qwen2.5vl:3b", base_url=os.getenv("OLLAMA_LOCAL_HOST"), temperature = 0.2)
 
         #app.state.llm = ChatOllama(model="qwen2.5vl:3b", temperature = 0.5)
         #app.state.llm = EuriLLM()
@@ -132,8 +132,8 @@ async def login(request: Request):
     """Redirect user to Google OAuth2 consent screen"""
     try:
         log.info("Inside login function")
-        redirect_uri = "https://genaipoconline.online/api/auth/callback"
-        #redirect_uri = "http://localhost:8000/auth/callback"
+        #redirect_uri = "https://genaipoconline.online/api/auth/callback"
+        redirect_uri = "http://localhost:8000/auth/callback"
         log.info(f"redirect_uri - {redirect_uri}")
         return await oauth.google.authorize_redirect(request, redirect_uri)
     except Exception:
@@ -160,7 +160,7 @@ async def auth_callback(request: Request):
         html = f"""
         <html>
         <body onload="document.forms[0].submit()">
-        <form method="GET" action=https://genaipoconline.online/>
+        <form method="GET" action="http://127.0.0.1:8501">
                 <input type="hidden" name="token" value="{jwt_token}">
             </form>
             Redirecting...

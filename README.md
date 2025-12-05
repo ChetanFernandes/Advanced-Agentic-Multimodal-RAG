@@ -1,605 +1,331 @@
-git init
-git remote add origin https://github.com/<your-username>/Advanced_prd_RAG.git
-git pull origin main --allow-unrelated-histories
-git add .
-git commit -m "Initial project upload"
-git branch -M main
-git push -u origin main
-sudo apt install -y tree
-tree -L 4
-
-streamlit run src\frontend\app.py
-python -m uvicorn src.backend.main:app --host 0.0.0.0 --port 8000 
-C:\Users\User\AppData\Local\Temp\tmpx22pd3.pdf
-Explanation:
-
-python -m uvicorn → launch uvicorn through python
-
-src.agentic_rag.backend.main:app → path to your FastAPI app
-
---host 0.0.0.0 → allow calls from Streamlit
-
---port 8000 → listen on port 8000
-
---reload → autoreload code when you edit
-
-C:\Users\User\AppData\Local\Temp\tmpx22pd3.pdf
-
-#pipreqs . --force --savepath=requirements.txt
-
-https://genaipoconline.online
-
-
-'''''''''''''''''''''''''''''''''''''''''''''''''''''''
-
-🚀 Advanced Agentic RAG System
-FastAPI + Streamlit + NGINX + Docker + Google OAuth + SSL + AstraDB
-
-A complete production-ready Retrieval-Augmented Generation (RAG) platform built with:
-
-🧠 Agentic LLM Pipeline
-
-🔍 Astra DB Vector Search
-
-🎨 Multimodal: Text + PDF + Images
-
-👤 Google OAuth Login
-
-📦 FastAPI Backend
-
-🌐 Streamlit Frontend
-
-🛡️ NGINX Reverse Proxy
-
-🔒 HTTPS (Let’s Encrypt + Certbot)
-
-🐳 Docker Compose Deployment
-
-☁️ Full EC2 Deployment Guide
-
-This README provides end-to-end setup, including Docker, domain setup, SSL, and server configuration.
-
-📚 Table of Contents
-
-1. Project Overview
-2. Architecture
-3. Features
-4. Folder Structure
-5. Environment Variables
-
-Local Setup (Docker)
-
-Production Deployment on AWS EC2
-
-Create EC2
-
-Install packages
-
-Clone project
-
-Configure NGINX
-
-SSL setup
-
-Start Docker services
-
-NGINX Configuration
-
-SSL Certificate Setup
-
-Testing the Deployment
-
-Troubleshooting
-
-Useful Commands
-
-Future Enhancements
-
-🧠 1. Project Overview
-
-This project is a fully functional RAG system that supports text, PDFs, PowerPoints, Excel, images, and embeddings.
-The system stores processed chunks in AstraDB Vector DB and uses a custom Agent LLM pipeline to answer questions.
-
-Users authenticate using Google OAuth2, then interact with the Streamlit UI, upload documents, and ask questions.
-
-🏗️ 2. Architecture
-                       🌍 Internet Users
-                               │
-                               │  HTTPS (Port 443)
-                               ▼
-                   ┌──────────────────────────────┐
-                   │     NGINX (Host on EC2)       │
-                   │    /etc/nginx/sites-enabled/  │
-                   │    SSL via Certbot            │
-                   └──────────────┬───────────────┘
-                                  │
-       ┌──────────────────────────┼──────────────────────────┐
-       │                          │                          │
-       ▼                          ▼                          ▼
- / (Frontend UI)        /api/* (Backend API)       WebSocket/TLS Upgrade
- Proxy to 8501          Proxy to 8000              (Streamlit Live App)
-       │                          │
-       ▼                          ▼
-┌──────────────────┐      ┌────────────────────────┐
-│ Streamlit Frontend│      │   FastAPI Backend      │
-│ Docker Container  │      │ Docker Container       │
-│ Port 8501         │      │ Port 8000              │
-└──────────────────┘      └────────────────────────┘
-       │                          │
-       │  JWT Token (from Google) │
-       │                          │
-       ▼                          ▼
-   Session State           User Collections,
-                           Agents, Memory,
-                         Vector Retriever, DB Index
-
-                                 │
-                                 │
-                                 ▼
-                    ┌────────────────────────┐
-                    │   AstraDB Vector Store │
-                    │  (Embeddings, Chunks)  │
-                    └────────────────────────┘
-
-                                 │
-                                 ▼
-                     ┌─────────────────────┐
-                     │   LLM (Euri Model)  │
-                     │  Agent + Tools      │
-                     └─────────────────────┘
-
-
-🚀 3. Features
-🧠 Agentic Intelligence
-
-Multi-vector retrieval
-
-LLM-based query rewriting
-
-Image-based summaries
-
-Memory-aware responses
-
-📄 Document Handling
-
-Supports:
-
-PDF (OCR + poppler + tesseract)
-
-DOCX
-
-PPTX
-
-XLSX
-
-CSV / TXT
-
-🔍 Vector Search
-
-AstraDB Vector Store
-
-Record Manager + MultiVectorRetriever
-
-🔐 Authentication
-
-Google OAuth
-
-JWT token
-
-Secure cookie session
-
-💻 Deployment-Ready
-
-Docker Compose
-
-NGINX reverse proxy
-
-HTTPS using Certbot
-
-Optimized for EC2
+🌟 Project Title  — Advanced Agentic RAG System + ChatGPT-Powered Real-Time Chatbot
+
+  A complete production-ready Retrieval-Augmented Generation (RAG) and Chat_GPT Model platform built with:
+
+      🧠 Agentic LLM Pipeline
+      🔍 Astra DB Vector Search
+      🎨 Multimodal: Text + PDF + Images
+      👤 Google OAuth Login
+      📦 FastAPI Backend
+      🌐 Streamlit Frontend
+      🛡️ NGINX Reverse Proxy
+      🔒 HTTPS (Let’s Encrypt + Certbot)
+      🐳 Docker Compose Deployment
+      🌐 Ngrok Support
+      ☁️ AWS EC2 
+
+This README provides an end-to-end guide covering architecture, features, setup, deployment, SSL automation, troubleshooting, and DevOps workflow.
+
+📚 Table of Contents:-
+    1. Project Overview
+    2. Architecture
+    3. Features of RAG
+    4. Folder Structure
+    5. Environment Variables
+    6. Local Setup (Docker)
+    7. Production Deployment (AWS EC2)
+    8. NGINX Configuration
+    9. SSL Certificate Setup
+    10. Testing the Deployment
+    11. Useful Docker Commands
+    12. Troubleshooting
+
+
+🧠 1. Project Overview:-
+        - This is a fully production-ready **RAG + Real-Time ChatGPT Chatbot System**.
+        - It supports PDFs, PowerPoints, Excel files, images, and text documents, converts them into embeddings, and stores them in **AstraDB Vector DB** 
+        - and uses a custom Agent LLM pipeline to answer questions. 
+        - Users log in via **Google OAuth2**, upload documents through the **Streamlit UI**, and interact with a **ChatGPT-like conversational interface**
+        
+    
+    Core components:
+      a. AstraDB Vector Store for embeddings + retrieval
+      b. Google OAuth2 for secure login
+      c. FastAPI backend for processing documents, chunking, embeddings, and agent execution
+      d. Streamlit frontend for user interaction
+      e. NGINX reverse proxy with full HTTPS
+      f. Docker Compose for local and production builds
+      g. AWS EC2 deployment guide included
+
+🏗️ 2. Architecture:-
+
+                    🌍 Internet Users
+                            │
+                            │  HTTPS (443)
+                            ▼
+┌──────────────────────────────────────────────────────────────────┐
+│                   🛡️ NGINX (EC2 Host)                            │
+│         Reverse Proxy • Routing • SSL (Certbot) • WebSockets     │
+└───────────────────────────────┬──────────────────────────────────┘
+                                │
+                 ┌──────────────┼──────────────┐
+                 │              │              │
+                 ▼              ▼              ▼
+          /  → Streamlit UI   /api → FastAPI   WebSocket Upgrade
+             (Port 8501)      (Port 8000)      (Realtime Chat)
+                 │              │
+                 ▼              ▼
+        ┌────────────────┐   ┌─────────────────────────┐
+        │ 🎨 Frontend    │    ⚡ Backend (FastAPI)    │
+        │ Streamlit      │   │ OAuth • JWT • Agents    │
+        └────────────────┘   │ Chunking • Retrieval    │
+                             └───────────┬─────────────┘
+                                         │
+                                         │ Vector Retrieval
+                                         ▼
+                      ┌─────────────────────────────────┐
+                      │ 🔍 AstraDB Vector Store         
+                      │ Embeddings • Chunks • Metadata  │
+                      └─────────────────────────────────┘
+                                         │
+                                         ▼
+                      ┌────────────────────────────────────┐
+                      │ 🔥 Agentic LLM Pipeline           
+                      │ Query Rewriting • Context Building 
+                      │ Calls Qwen via Ngrok Tunnel        │
+                      └────────────────────────────────────┘
+                                         │
+                                         ▼
+                      ┌──────────────────────────────────────┐
+                      │ 🤖 Qwen Model (Local Machine)        │
+                      │ Running on localhost:11434           │
+                      │ Exposed via Ngrok → HTTPS Tunnel     │
+                      │ Example: https://abc.ngrok.app/api   │
+                      └──────────────────────────────────────┘
+
+
+🚀 3. Features of RAG
+      🧠 Agentic Intelligence
+        a. Multi-vector retrieval
+        b. LLM-based query rewriting
+        c. Reranking retrived results
+        d. Memory-aware conversation
+        e. Image + PDF + text interpretation
+
+      📄 Document Handling
+      Supports:
+        a. PDF (OCR via Tesseract + Poppler)
+        b. DOCX
+        c. PPTX
+        d. XLSX
+        e. TXT / CSV
+        f. Images (CLIP embeddings)
+
+      🔍 Vector Search
+        a. AstraDB vector index
+        b. Record Manager + MultiVectorRetriever
+        c. Chunk metadata tracking
+      
+      🔐 Authentication
+        a. Google OAuth
+        b. JWT token
+        c. Secure session cookies
+
+      💻 Deployment Ready
+        a. Docker Compose
+        b. Host-level NGINX
+        c. HTTPS via Certbot
+        d. EC2 optimized
+
+      🌐 Ngrok Support (Public URL for Local Testing)
+        a. Expose local backend or Streamlit via secure tunnels
+        b. Enables OAuth callback testing
+        c. Great for development demo environments
 
 📁 4. Folder Structure
-Advanced-RAG/
-├── docker-compose.yml
-├── nginx/
-│   └── default.conf
-├── src/
-│   ├── backend/
-│   │   ├── main.py
-│   │   ├── Dockerfile
-│   │   ├── requirements.txt
-│   │   ├── DB.py
-│   │   ├── agent.py
-│   │   ├── Adding_files.py
-│   │   ├── chunking_retrieveing.py
-│   │   ├── hybrid_pdf_parser.py
-│   │   ├── image_processing_bytes.py
-│   │   ├── utilis.py
-│   ├── frontend/
-│   │   ├── Dockerfile
-│   │   ├── app.py
-│   │   ├── requirements.txt
-│   ├── models/
-│   └── logger_config.py
-└── README.md
+      Advanced-RAG/
+      ├── docker-compose.yml
+      ├── nginx/
+      │   └── default.conf
+      ├── src/
+      │   ├── backend/
+      │   │   ├── main.py
+      │   │   ├── Dockerfile
+      │   │   ├── requirements.txt
+      │   │   ├── DB.py
+      │   │   ├── agent.py
+      │   │   ├── Adding_files.py
+      │   │   ├── chunking_retrieveing.py
+      │   │   ├── hybrid_pdf_parser.py
+      │   │   ├── image_processing_bytes.py
+      │   │   ├── utilis.py
+      │   ├── frontend/
+      │   │   ├── Dockerfile
+      │   │   ├── app.py
+      │   │   ├── requirements.txt
+      │   ├── models/
+      │   └── logger_config.py
+      └── README.md
 
 🔐 5. Environment Variables
+        a. SERPER_API_KEY = ********************
+        b. Google_API_KEY = ********************
+        c. ASTRA_DB_APPLICATION_TOKEN = ********************
+        d. ASTRA_DB_API_ENDPOINT = ********************
+        e. LANGSMITH_TRACING = ********************
+        f. LANGSMITH_ENDPOINT = ********************
+        g. LANGSMITH_API_KEY = ********************
+        h. LANGSMITH_PROJECT =  ********************
+        i. GOOGLE_CLIENT_ID = ********************
+        j. GOOGLE_CLIENT_SECRET = ********************
+        k. SECRET_KEY = ********************
+        l. JWT_SECRET = ********************
+        m. OLLAMA_HOST = ********************
+        n. OLLAMA_LOCAL_HOST = ********************
 
-Create:
+📸 Screenshots of Application
 
-src/backend/.env
-
-
-Content:
-
-GOOGLE_CLIENT_ID=xxxx.apps.googleusercontent.com
-GOOGLE_CLIENT_SECRET=xxxx
-JWT_SECRET=super-secret
-ASTRA_DB_ID=xxxx
-ASTRA_DB_REGION=xxxx
-ASTRA_DB_APPLICATION_TOKEN=xxxx
 
 🐳 6. Local Setup (Docker)
-Build & Run:
-docker-compose up -d --build
-
-Access:
-
-Frontend: http://localhost:8501
-
-Backend: http://localhost:8000
+      Build & Run:
+        a. docker-compose up -d --build
 
 ☁️ 7. Production Deployment (AWS EC2)
-
-PART 1 — Launch the EC2 INSTANCE
-
-Launch EC2:
-Ubuntu 22.04 LTS
-t2.medium or t3.medium
-Ports open: 22, 80, 443
-Attach key pair
-
-PART 2 — CONNECT TO EC2
-chmod 400 "AG.pem"
-
-ssh -i RAG.pem ubuntu@13.49.76.9
-
-PART 3 — INSTALL DOCKER & DOCKER COMPOSE
-sudo apt update
-sudo apt install -y docker.io
-sudo systemctl enable docker
-sudo systemctl start docker
-sudo usermod -aG docker ubuntu
-newgrp docker
-docker --version
-
-ome more method
-Step 1: Add Docker’s official GPG key
-sudo apt update
-sudo apt install -y ca-certificates curl gnupg
-sudo install -m 0755 -d /etc/apt/keyrings
-curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
-sudo chmod a+r /etc/apt/keyrings/docker.gpg
-Step 2: Add Docker repo
-echo \
-  "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] \
-  https://download.docker.com/linux/ubuntu \
-  $(lsb_release -cs) stable" | \
-  sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
-
-Step 3: Update apt
-sudo apt update
-Step 4: Install Docker correctly
-sudo apt install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
-docker --version
-sudo systemctl status docker
-
-
-
-sudo apt install -y docker-compose
-docker-compose --version
-
-PART 4 — INSTALL HOST NGINX
-
-sudo apt install -y nginx
-sudo systemctl enable nginx
-sudo systemctl start nginx
-sudo nginx -t
-
-sudo tail -f /var/log/nginx/access.log
-
-Test from browser:
-http://EC2_IP -> you will ngnis page
-
-PART 5 — PREPARE NGINX SSL DIRECTORIES
-These ensure Certbot + NGINX have the correct directories.
-sudo mkdir -p /etc/letsencrypt - This is where Certbot will store SSL certificates: fullchain.pem, privkey.pem
-sudo mkdir -p /var/www/html - This is needed because Certbot uses HTTP-01 challenge, which requires: /var/www/html/.well-known/acme-challenge/<token>
-sudo chown -R www-data:www-data /var/www/html - Certbot uses Nginx user www-data, so permissions must be correct.
-
-🧩 PART 6 — UPLOAD PROJECT TO EC2
-
-git clone <your_repo>
-cd Advanced-RAG
-Correct structure MUST be:
-
-Advanced-RAG/
-  docker-compose.yml
-  nginx/default.conf  (Later not needed; we use host nginx)
-  src/backend/Dockerfile
-  src/frontend/Dockerfile
-  src/backend/main.py
-  src/frontend/app.py
-  src/backend/requirements.txt
-  src/frontend/requirements.txt
-
-
-mkdir -p models/blobs
-mkdir -p models/qwen2.5vl
-mkdir -p clip_weights
-
-scp -i RAG.pem -r \
-  "/d/GEN AI/GEN_AI_MASTERS_Bappy/Langchain/Advanced_prod_RAG/models/blobs" \
-  ubuntu@51.21.169.168:/home/ubuntu/Advanced-RAG/models/
-
-scp -i genai-prod-key.pem -r \
-  "/d/GEN AI/GEN_AI_MASTERS_Bappy/Langchain/Advanced_prod_RAG/models/qwen2.5vl" \
-  ubuntu@13.53.175.219:/home/ubuntu/Advanced-RAG/models/
-
-scp -i RAG.pem -r \
-  "/d/GEN AI/GEN_AI_MASTERS_Bappy/Langchain/Advanced_prod_RAG/clip_weights" \
-  ubuntu@51.21.169.168:/home/ubuntu/Advanced-RAG/
-
-
-
-PART 9 — BUILD AND START DOCKER
-
-docker compose up -d --build
-docker compose build backend
-docker ps
-
-
-PART 10 — HOST NGINX CONFIG (WITHOUT SSL)
-sudo rm /etc/nginx/sites-available/genaipoconline
-sudo rm /etc/nginx/sites-enabled/genaipoconline
-sudo nano /etc/nginx/sites-available/genaipoconline.conf
-
-paste :-
-server {
-    listen 80;
-    server_name genaipoconline.online www.genaipoconline.online;
-
-    # Streamlit UI
-    location / {
-        proxy_pass http://127.0.0.1:8501/;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection "upgrade";
-        proxy_buffering off;
-    }
-
-    # Streamlit WebSockets
-    location /_stcore/ {
-        proxy_pass http://127.0.0.1:8501/_stcore/;
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection "upgrade";
-        proxy_buffering off;
-    }
-
-    location /static/ {
-        #proxy_pass http://frontend:8501/static/;
-        proxy_pass http://127.0.0.1:8501/static/;
-        proxy_http_version 1.1;
-    }
-
-    location /stream {
-        proxy_pass http://127.0.0.1:8501/stream;
-        #proxy_pass http://frontend:8501/static/;
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection "upgrade";
-    }
-
-
-    # FastAPI backend
-    location /api/ {
-        rewrite ^/api/(.*)$ /$1 break;
-        proxy_pass http://127.0.0.1:8000/;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-        proxy_set_header Authorization $http_authorization;
-    }
-}
-
-Enable config:
-sudo ln -s /etc/nginx/sites-available/genaipoconline.conf /etc/nginx/sites-enabled/ - Enable NGINX site
-sudo rm /etc/nginx/sites-enabled/default - remove deafult config
-sudo nginx -t
-sudo systemctl reload nginx
-
-PART 11 — INSTALL CERTBOT SSL
-sudo apt install -y certbot python3-certbot-nginx
-sudo certbot --nginx -d genaipoconline.online -d www.genaipoconline.online
-
-PART 12 — VERIFY EVERYTHING
-Frontend:
-https://genaipoconline.online
-
-OAuth Login:
-https://genaipoconline.online/api/login
-
-Backend:
-https://genaipoconline.online/api/health
-
-Backend Health
-curl https://genaipoconline.online/api/health
-
-curl http://127.0.0.1:8501
-curl http://127.0.0.1:8000/health
-curl http://localhost:11434/api/tags
-curl http://localhost:11434/api/generate -d '{
-  "model": "qwen2.5vl:3b",
-  "prompt": "Hello, who are you?"
-}'
-
-
-
-
-PART 13 — MANAGE BACKEND LOGS
-docker logs -f backend
-CTRL + C
-
-🧩 PART 14 — REBUILD BACKEND (when code changes)
-docker-compose build backend
-docker-compose up -d
-
-🧩 PART 15 — REBUILD FRONTEND (when code changes)
-
-docker-compose build frontend
-docker-compose up -d
-
-🧩 PART 16 — RESTART EVERYTHING
-docker-compose down
-docker-compose up -d
-
-
-
-
-🐳 DOCKER COMMANDS USED + MUST-KNOW DEBUG COMMANDS (Organized by category)
-
-✅ 1. Container Status & Basic Monitoring
-👉 Show running containers
-docker ps
-
-👉 Show ALL containers (running + stopped)
-docker ps -a
-
-👉 Show container logs
-docker logs backend
-docker logs frontend
-docker logs nginx
-
-👉 Follow logs in real time
-docker logs -f backend
-
-Exit using:
-
-CTRL + C
-
-✅ 2. Starting / Stopping / Restarting Services
-👉 Start all containers (using docker-compose)
-docker-compose up -d
-
-👉 Stop all containers
-docker-compose down
-
-👉 Restart only backend
-docker-compose restart backend
-
-👉 Restart everything
-docker-compose down
-docker-compose up -d
-
-✅ 3. Build / Rebuild Images
-👉 Build ONLY backend image
-docker-compose build backend
-
-👉 Build ONLY frontend
-docker-compose build frontend
-
-👉 Build everything
-docker-compose build
-
-👉 Build + run everything
-docker-compose up -d --build
-
-✅ 4. Exec Into Running Container (very useful!)
-👉 Get inside backend shell
-docker exec -it backend bash
-
-👉 Get inside frontend
-docker exec -it frontend bash
-
-👉 Get inside nginx
-docker exec -it nginx bash
-
-
-Inside the container, you can run:
-
-pip list
-
-ls
-
-check installed commands like pdfinfo, tesseract
-
-✅ 5. Troubleshooting Commands
-👉 Check Docker service status
-systemctl status docker
-
-👉 Restart Docker engine
-sudo systemctl restart docker
-
-✅ 6. Inspect Commands
-👉 Inspect container details
-docker inspect backend
-
-👉 Inspect networks
-docker network ls
-docker network inspect app-net
-
-👉 Inspect images
-docker images
-
-✅ 7. Remove Stopped Containers / Images / Cache
-👉 Remove ALL stopped containers
-docker container prune
-
-👉 Remove dangling images
-docker image prune
-
-👉 Remove everything unused (careful!)
-docker system prune -a
-
-✅ 8. Volume & Disk Debugging
-👉 List volumes
-docker volume ls
-
-👉 Inspect a volume
-docker volume inspect <volume_name>
-
-👉 Remove unused volumes
-docker volume prune
-
-✅ 9. Kill Containers Manually
-
-Sometimes a container freezes during logs:
-
-👉 Find its PID
-ps aux | grep docker
-
-👉 Kill it
-kill -9 <PID>
-
-✅ 10. Port Conflicts Debugging
-
-If you see:
-
-ERROR: port 80 already in use
-
-
-Check what is using port 80:
-
-sudo lsof -i :80
-
-
-Kill that process:
-
-sudo kill -9 <PID>
-
+    PART 1 — Launch the EC2 INSTANCE
+        1. Ubuntu 22.04 LTS
+
+    PART 2 — CONNECT TO EC2
+          1. chmod 400 "AG.pem"
+          2. ssh -i RAG.pem ubuntu@public_ip
+
+    PART 3 — INSTALL DOCKER & DOCKER COMPOSE
+      a. Step 1: Add Docker’s official GPG key
+          1. sudo apt update
+          2. sudo apt install -y ca-certificates curl gnupg
+          3. sudo install -m 0755 -d /etc/apt/keyrings
+          4. curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+          5. sudo chmod a+r /etc/apt/keyrings/docker.gpg
+
+      b. Step 2: Add Docker repo
+          1. echo \
+            "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] \
+            https://download.docker.com/linux/ubuntu \
+            $(lsb_release -cs) stable" | \
+            sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+
+      c. Step 3: Update apt
+          1. sudo apt update
+
+      d. Step 4: Install Docker correctly
+          1. sudo apt install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+          2. docker --version
+          3. docker compose --version
+          4. sudo systemctl enable docker
+          5. sudo systemctl start docker
+          6. sudo systemctl status docker
+          7. sudo usermod -aG docker ubuntu
+          8. newgrp docker
+      
+    PART 4 — INSTALL HOST NGINX
+          1. sudo apt install -y nginx
+          2. sudo systemctl enable nginx
+          3. sudo systemctl start nginx
+          4. sudo nginx -t
+          5. Test from browser:
+              http://EC2_IP -> you will ngnis page
+          6. sudo tail -f /var/log/nginx/access.log
+      
+    PART 5 — PREPARE NGINX SSL DIRECTORIES - These ensure Certbot + NGINX have the correct directories.
+          1. sudo mkdir -p /etc/letsencrypt - This is where Certbot will store SSL certificates: fullchain.pem, privkey.pem
+          2. sudo mkdir -p /var/www/html - This is needed because Certbot uses HTTP-01 challenge, which requires: /var/www/html/.well-known/acme-challenge/<token>
+          3. sudo chown -R www-data:www-data /var/www/html - Certbot uses Nginx user www-data, so permissions must be correct.
+
+    PART 6 — UPLOAD PROJECT TO EC2 + Models (clip)
+          1. git clone <your_repo>
+          2. cd Advanced-RAG -> Move to project root directory
+          3. scp -i RAG.pem -r \
+            "/d/GEN AI/GEN_AI_MASTERS_Bappy/Langchain/Advanced_prod_RAG/clip_weights" \
+            ubuntu@51.21.169.168:/home/ubuntu/Advanced-RAG/
+        
+    PART 7 — BUILD AND START DOCKER
+          1. docker compose up -d --build
+          2. docker ps
+
+
+🌐 8. NGINX Configuration
+          1. sudo nano /etc/nginx/sites-available/genaipoconline.conf
+              Paste:- 
+              server {
+                        listen 80;
+                        server_name genaipoconline.online www.genaipoconline.online;
+
+                        root /var/www/html;
+                        index index.html index.htm;
+                      }
+
+          2. Enable config:
+              a. sudo ln -s /etc/nginx/sites-available/genaipoconline.conf /etc/nginx/sites-enabled/ - Enable NGINX site
+              b. sudo rm /etc/nginx/sites-enabled/default - remove deafult config
+              c. sudo nginx -t
+              d. sudo systemctl reload nginx
+
+🔒 9. SSL Certificate Setup - Enable HTTPS using Certbot:
+          1. sudo apt install -y certbot python3-certbot-nginx
+          2. sudo certbot --nginx -d genaipoconline.online -d www.genaipoconline.online
+          3. Final nginx config file can be checked in project root  - nginx\default.conf
+
+🧪 10. Testing the Deployment
+          1. Frontend:  https://genaipoconline.online
+          2. OAuth Login: https://genaipoconline.online/api/login
+          3. Backend Health: https://genaipoconline.online/api/health
+          4. Local Tests:
+             1. curl http://127.0.0.1:8501
+             2. curl http://127.0.0.1:8000/health
+
+🐳 11. Useful Docker Commands
+      a. Monitoring
+          1. docker ps
+          2. docker ps -a  -  Show ALL containers (running + stopped)
+          3. docker logs backend
+          4. docker logs -f backend - Follow logs in real time. Exit using: CTRL + C
+          5. docker logs frontend 
+          6. docker logs -f frontend - Follow logs in real time
+          7. sudo tail -f /var/log/nginx/access.log - Nginx logs
+
+      b. Build & Restart
+          1. docker compose build - Build everything
+          2. docker compose build backend
+          3. docker compose up -d --build
+          4. docker compose restart backend
+          5. docker compose build frontend
+          6. docker compose up -d --build
+        
+      c. RESTART EVERYTHING
+          1. docker compose down - Stop all containers
+          2. docker compose up -d
+          3. docker compose restart backend
+
+      d. Shell into Containers
+          1. docker exec -it backend bash
+          2. docker exec -it frontend bash
+          3. docker exec -it nginx bash
+          4. Inside the container, you can run: pip list ls
+      
+      e. Troubleshooting Commands
+          1. sudo systemctl restart docker
+          2. docker inspect backend - Inspect container
+          3. docker network ls -  Inspect networks
+          4. docker network inspect app-net
+          5. docker images - Inspect images
+      
+      f. Cleanup
+          1. docker container prune -  Remove ALL stopped containers
+          2. docker image prune - Remove dangling images
+          3. docker system prune -a - Remove everything unused (careful!)
+
+🛠️ 12. Troubleshooting
+          1. docker volume ls - List all volumes.
+          2. docker volume inspect - Inspect volume details.
+          3. docker volume prune - Remove unused volumes.
+          4. ps aux | grep docker - List stuck Docker processes.
+          5. sudo kill -9 <PID> - Kill stuck Docker processes.
+          6.sudo lsof -i :80 - List ports used by Docker services.
+
+Tracking using Langsmith:-
+| Metric                    | Value            | Meaning                          |
+| ------------------------- | ---------------- | -------------------------------- |
+| **Average Response Time** | **3.25 seconds** | Most responses delivered fast    |
+| **Fastest (P50 FTT)**     | **1.05 sec**     | First token appears quickly      |
+| **Slowest (P99)**         | **13–14 sec**    | Only 1% of requests are slow     |
+
+🎉 Author - Chetan Fernandis - Full-Stack GenAI Engineer • RAG Systems • LLMOps • MLOps

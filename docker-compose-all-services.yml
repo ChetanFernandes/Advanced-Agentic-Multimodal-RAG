@@ -1,0 +1,64 @@
+version: "3.9"
+
+services:
+
+  ollama:
+    build:
+      context: .
+      dockerfile: Dockerfile.ollama
+    container_name: ollama
+    restart: always
+    networks:
+      - app-net
+    ports:
+      - "11434:11434"
+
+  backend:
+    build:
+      context: .
+      dockerfile: src/backend/Dockerfile
+    container_name: backend
+    restart: always
+    env_file:
+      - ./src/backend/.env     # Astra DB, Google keys, JWT Secret, etc.
+    networks:
+      - app-net
+    expose:
+      - "8000"                 # backend must be exposed, NOT published
+    depends_on:
+      - frontend
+
+  frontend:
+    build:
+      context: .
+      dockerfile: src/frontend/Dockerfile
+    container_name: frontend
+    restart: always
+    networks:
+      - app-net
+    expose:
+      - "8501"
+    environment:
+      BACKEND_URL: "https://genaipoconline.online/api"   # IMPORTANT
+
+  nginx:
+    image: nginx:stable
+    container_name: nginx
+    restart: always
+    depends_on:
+      - backend
+      - frontend
+    networks:
+      - app-net
+    ports:
+      - "80:80"          # HTTP
+      - "443:443"        # HTTPS (Certbot will configure SSL)
+    volumes:
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
+      - /etc/letsencrypt:/etc/letsencrypt          # SSL certificates
+      - /var/www/html:/var/www/html                # Certbot webroot
+
+networks:
+  app-net:
+    driver: bridge
+
