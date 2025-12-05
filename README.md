@@ -245,7 +245,7 @@ FULL REQUEST–RESPONSE LIFECYCLE
           5. docker logs frontend 
           6. docker logs -f frontend - Follow logs in real time
           7. sudo tail -f /var/log/nginx/access.log - Nginx logs
-
+          
       b. Build & Restart
           1. docker compose build - Build everything
           2. docker compose build backend
