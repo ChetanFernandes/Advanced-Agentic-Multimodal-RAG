@@ -17,6 +17,8 @@
 This README provides an end-to-end guide covering architecture, features, setup, deployment, SSL automation, troubleshooting, and DevOps workflow.
 
 📚 Table of Contents:-
+
+
     1. Project Overview
     2. Architecture
     3. Features of RAG
@@ -32,10 +34,10 @@ This README provides an end-to-end guide covering architecture, features, setup,
     
 🧠 1. Project Overview:-
 
-        - This is a fully production-ready **RAG + Real-Time ChatGPT Chatbot System**.
-        - It supports PDFs, PowerPoints, Excel files, images, and text documents, converts them into embeddings, and stores them in **AstraDB Vector DB** 
-        - and uses a custom Agent LLM pipeline to answer questions. 
-        - Users log in via **Google OAuth2**, upload documents through the **Streamlit UI**, and interact with a **ChatGPT-like conversational interface**
+      - This is a fully production-ready **RAG + Real-Time ChatGPT Chatbot System**.
+      - It supports PDFs, PowerPoints, Excel files, images, and text documents, converts them into embeddings, and stores them in **AstraDB Vector DB** 
+      - and uses a custom Agent LLM pipeline to answer questions. 
+      - Users log in via **Google OAuth2**, upload documents through the **Streamlit UI**, and interact with a **ChatGPT-like conversational interface**
     Core components:
       a. AstraDB Vector Store for embeddings + retrieval
       b. Google OAuth2 for secure login
@@ -280,6 +282,7 @@ Tracking using Langsmith:-
 | **Slowest (P99)**         | **13–14 sec**    | Only 1% of requests are slow     |
 
 🎉 Author - Chetan Fernandis - Full-Stack GenAI Engineer • RAG Systems • LLMOps • MLOps
+
 
 
 
