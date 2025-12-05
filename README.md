@@ -29,9 +29,9 @@ This README provides an end-to-end guide covering architecture, features, setup,
     10. Testing the Deployment
     11. Useful Docker Commands
     12. Troubleshooting
-
-
+    
 🧠 1. Project Overview:-
+
         - This is a fully production-ready **RAG + Real-Time ChatGPT Chatbot System**.
         - It supports PDFs, PowerPoints, Excel files, images, and text documents, converts them into embeddings, and stores them in **AstraDB Vector DB** 
         - and uses a custom Agent LLM pipeline to answer questions. 
@@ -264,6 +264,7 @@ Tracking using Langsmith:-
 | **Slowest (P99)**         | **13–14 sec**    | Only 1% of requests are slow     |
 
 🎉 Author - Chetan Fernandis - Full-Stack GenAI Engineer • RAG Systems • LLMOps • MLOps
+
 
 
 
