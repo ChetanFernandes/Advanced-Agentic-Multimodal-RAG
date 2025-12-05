@@ -25,7 +25,10 @@ share/python-wheels/
 *.egg-info/
 .installed.cfg
 *.egg
-Dockerfile.ollama'
+Dockerfile.ollama
+agent_1.py
+docker-compose-all-services
+
 
 
 
