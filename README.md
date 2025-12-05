@@ -90,29 +90,8 @@ This README provides an end-to-end guide covering architecture, features, setup,
         c. Great for development demo environments
 
 📁 4. Folder Structure
-      Advanced-RAG/
-      ├── docker-compose.yml
-      ├── nginx/
-      │   └── default.conf
-      ├── src/
-      │   ├── backend/
-      │   │   ├── main.py
-      │   │   ├── Dockerfile
-      │   │   ├── requirements.txt
-      │   │   ├── DB.py
-      │   │   ├── agent.py
-      │   │   ├── Adding_files.py
-      │   │   ├── chunking_retrieveing.py
-      │   │   ├── hybrid_pdf_parser.py
-      │   │   ├── image_processing_bytes.py
-      │   │   ├── utilis.py
-      │   ├── frontend/
-      │   │   ├── Dockerfile
-      │   │   ├── app.py
-      │   │   ├── requirements.txt
-      │   ├── models/
-      │   └── logger_config.py
-      └── README.md
+
+<img width="298" height="542" alt="image" src="https://github.com/user-attachments/assets/17131332-88fc-4a32-b7eb-c14b4bc8d126" />
 
 🔐 5. Environment Variables
         a. SERPER_API_KEY = ********************
@@ -286,6 +265,7 @@ Tracking using Langsmith:-
 | **Slowest (P99)**         | **13–14 sec**    | Only 1% of requests are slow     |
 
 🎉 Author - Chetan Fernandis - Full-Stack GenAI Engineer • RAG Systems • LLMOps • MLOps
+
 
 
 
