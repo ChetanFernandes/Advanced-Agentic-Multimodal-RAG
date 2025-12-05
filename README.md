@@ -93,6 +93,8 @@ This README provides an end-to-end guide covering architecture, features, setup,
 <img width="298" height="542" alt="image" src="https://github.com/user-attachments/assets/17131332-88fc-4a32-b7eb-c14b4bc8d126" />
 
 🔐 5. Environment Variables
+
+
         a. SERPER_API_KEY = ********************
         b. Google_API_KEY = ********************
         c. ASTRA_DB_APPLICATION_TOKEN = ********************
@@ -112,10 +114,12 @@ This README provides an end-to-end guide covering architecture, features, setup,
 
 
 🐳 6. Local Setup (Docker)
-      Build & Run:
+
+     Build & Run:
         a. docker-compose up -d --build
 
 ☁️ 7. Production Deployment (AWS EC2)
+
     PART 1 — Launch the EC2 INSTANCE
         1. Ubuntu 22.04 LTS
 
@@ -178,6 +182,8 @@ This README provides an end-to-end guide covering architecture, features, setup,
 
 
 🌐 8. NGINX Configuration
+
+
           1. sudo nano /etc/nginx/sites-available/genaipoconline.conf
               Paste:- 
               server {
@@ -195,11 +201,15 @@ This README provides an end-to-end guide covering architecture, features, setup,
               d. sudo systemctl reload nginx
 
 🔒 9. SSL Certificate Setup - Enable HTTPS using Certbot:
+
+
           1. sudo apt install -y certbot python3-certbot-nginx
           2. sudo certbot --nginx -d genaipoconline.online -d www.genaipoconline.online
           3. Final nginx config file can be checked in project root  - nginx\default.conf
 
 🧪 10. Testing the Deployment
+
+
           1. Frontend:  https://genaipoconline.online
           2. OAuth Login: https://genaipoconline.online/api/login
           3. Backend Health: https://genaipoconline.online/api/health
@@ -208,6 +218,8 @@ This README provides an end-to-end guide covering architecture, features, setup,
              2. curl http://127.0.0.1:8000/health
 
 🐳 11. Useful Docker Commands
+
+
       a. Monitoring
           1. docker ps
           2. docker ps -a  -  Show ALL containers (running + stopped)
@@ -249,6 +261,8 @@ This README provides an end-to-end guide covering architecture, features, setup,
           3. docker system prune -a - Remove everything unused (careful!)
 
 🛠️ 12. Troubleshooting
+
+
           1. docker volume ls - List all volumes.
           2. docker volume inspect - Inspect volume details.
           3. docker volume prune - Remove unused volumes.
@@ -257,6 +271,8 @@ This README provides an end-to-end guide covering architecture, features, setup,
           6.sudo lsof -i :80 - List ports used by Docker services.
 
 Tracking using Langsmith:-
+
+
 | Metric                    | Value            | Meaning                          |
 | ------------------------- | ---------------- | -------------------------------- |
 | **Average Response Time** | **3.25 seconds** | Most responses delivered fast    |
@@ -264,6 +280,7 @@ Tracking using Langsmith:-
 | **Slowest (P99)**         | **13–14 sec**    | Only 1% of requests are slow     |
 
 🎉 Author - Chetan Fernandis - Full-Stack GenAI Engineer • RAG Systems • LLMOps • MLOps
+
 
 
 
