@@ -53,7 +53,8 @@ This README provides an end-to-end guide covering architecture, features, setup,
 
 🏗️ 2. Architecture:-
 
-<img width="381" height="655" alt="image" src="https://github.com/user-attachments/assets/6cba5fcb-a1eb-488a-8b94-c0e3ef5033fc" />
+<img width="2740" height="1036" alt="diagram-export-1-2-2026-2_54_08-pm" src="https://github.com/user-attachments/assets/ef2b96ca-5b5d-4f36-b212-c0fef8e122a4" />
+
 
 FULL REQUEST–RESPONSE LIFECYCLE
 
@@ -312,6 +313,7 @@ Tracking using Langsmith:-
 🎉 Author - 
 
 Chetan Fernandis - Full-Stack GenAI Engineer • RAG Systems • LLMOps • MLOps
+
 
 
 
